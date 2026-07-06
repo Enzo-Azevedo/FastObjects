@@ -5,6 +5,8 @@ from __future__ import annotations
 import glfw
 import moderngl
 
+from fastobjects import _context
+
 
 class Window:
     """Janela nativa com contexto OpenGL 3.3 core.
@@ -48,6 +50,7 @@ class Window:
         self.ctx.enable(moderngl.BLEND)
         self.width = width
         self.height = height
+        _context.set_current(self)
 
     @property
     def should_close(self) -> bool:
@@ -63,6 +66,8 @@ class Window:
         glfw.swap_buffers(self._win)
 
     def close(self) -> None:
+        if _context.get_current() is self:
+            _context.set_current(None)
         if self._win is not None:
             glfw.destroy_window(self._win)
             self._win = None

@@ -18,7 +18,7 @@ BENCHES = [
     "bench_arcade.py",
     "bench_pyglet.py",
     "bench_raylib.py",
-    # "bench_fastobjects.py",  # habilitado no Task 12
+    "bench_fastobjects.py",
 ]
 
 

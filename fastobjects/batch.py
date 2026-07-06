@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import moderngl
 import numpy as np
 from PIL import Image
 
+from fastobjects import _context
 from fastobjects.core.renderer import FLOATS_PER_SPRITE, SpriteRenderer
 from fastobjects.errors import CapacityError
 
@@ -17,25 +20,34 @@ class SpriteBatch:
     As views `pos`, `size`, `rot`, `color` escrevem direto em `data`.
 
     Args:
-        ctx: contexto moderngl ativo.
         texture_path: caminho de uma imagem (qualquer formato PIL).
         capacity: número máximo de sprites do lote.
-        view_size: (largura, altura) do alvo de render em pixels.
+        ctx: contexto moderngl; se None, usa o da janela atual.
+        view_size: (largura, altura) do alvo de render em pixels;
+            se None, usa o tamanho da janela atual.
     """
 
     def __init__(
         self,
-        ctx: moderngl.Context,
         texture_path: str,
         capacity: int,
-        view_size: tuple[int, int],
+        *,
+        ctx: moderngl.Context | None = None,
+        view_size: tuple[int, int] | None = None,
     ) -> None:
         if capacity <= 0:
             raise ValueError(
                 f"capacity={capacity} inválida: use um valor > 0 "
                 "(quantidade máxima de sprites do lote)."
             )
-        img = Image.open(texture_path).convert("RGBA")
+        ctx, view_size = _context.resolve(ctx, view_size)
+        path = Path(texture_path)
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"Textura não encontrada: {path.resolve()} — verifique o caminho "
+                "(relativo ao diretório de execução) ou use um caminho absoluto."
+            )
+        img = Image.open(path).convert("RGBA")
         texture = ctx.texture(img.size, 4, data=img.tobytes())
         self.texture_size = img.size
         self.capacity = capacity

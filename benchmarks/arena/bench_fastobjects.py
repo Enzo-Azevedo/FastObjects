@@ -25,7 +25,7 @@ MAX_CAPACITY = 2_000_000
 
 def main() -> None:
     win = Window(WIDTH, HEIGHT, "bench: fastobjects", vsync=False)
-    batch = SpriteBatch(win.ctx, str(ASSET), capacity=MAX_CAPACITY, view_size=(WIDTH, HEIGHT))
+    batch = SpriteBatch(str(ASSET), capacity=MAX_CAPACITY)
 
     def trial(n: int) -> tuple[float, float]:
         if n > MAX_CAPACITY:

@@ -3,7 +3,7 @@
 Registro histórico de toda medição do projeto. Nenhuma decisão de performance
 existe sem uma entrada aqui. Formato: seções datadas, hardware explícito.
 
-## Arena 2026-07-06
+## Arena 2026-07-06 (baseline, sem fastobjects)
 
 - Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
 - Python 3.13.13 | Windows 10

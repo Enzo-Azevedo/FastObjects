@@ -55,6 +55,21 @@ def test_spawn_over_capacity_raises_actionable_error(gl):
         batch.spawn(5)
 
 
+def test_spawn_negative_n_raises_value_error(gl):
+    ctx, _ = gl
+    batch = SpriteBatch(ctx, BUNNY, capacity=10, view_size=(64, 64))
+    with pytest.raises(ValueError, match="negativo"):
+        batch.spawn(-5)
+
+
+def test_init_non_positive_capacity_raises_value_error(gl):
+    ctx, _ = gl
+    with pytest.raises(ValueError, match="capacity=0"):
+        SpriteBatch(ctx, BUNNY, capacity=0, view_size=(64, 64))
+    with pytest.raises(ValueError, match="capacity=-1"):
+        SpriteBatch(ctx, BUNNY, capacity=-1, view_size=(64, 64))
+
+
 def test_clear_resets_count(gl):
     ctx, _ = gl
     batch = SpriteBatch(ctx, BUNNY, capacity=10, view_size=(64, 64))

@@ -28,6 +28,11 @@ def main() -> None:
     batch = SpriteBatch(win.ctx, str(ASSET), capacity=MAX_CAPACITY, view_size=(WIDTH, HEIGHT))
 
     def trial(n: int) -> tuple[float, float]:
+        if n > MAX_CAPACITY:
+            # Teto de capacity do batch, não um limite de performance: encerra
+            # o ramp como trial falho em vez de deixar spawn() levantar
+            # CapacityError e derrubar o subprocesso.
+            return float("inf"), float("inf")
         rng = np.random.default_rng(SEED)
         pos, vel = make_bunnies(n, rng)
         batch.clear()

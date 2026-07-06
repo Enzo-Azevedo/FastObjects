@@ -30,6 +30,11 @@ class SpriteBatch:
         capacity: int,
         view_size: tuple[int, int],
     ) -> None:
+        if capacity <= 0:
+            raise ValueError(
+                f"capacity={capacity} inválida: use um valor > 0 "
+                "(quantidade máxima de sprites do lote)."
+            )
         img = Image.open(texture_path).convert("RGBA")
         texture = ctx.texture(img.size, 4, data=img.tobytes())
         self.texture_size = img.size
@@ -58,8 +63,13 @@ class SpriteBatch:
             O slice das linhas recém-criadas em `data`/views.
 
         Raises:
+            ValueError: se n for negativo.
             CapacityError: se n não couber; a mensagem diz a capacity necessária.
         """
+        if n < 0:
+            raise ValueError(
+                f"spawn({n}): n não pode ser negativo. Use n >= 0."
+            )
         if self.count + n > self.capacity:
             raise CapacityError(
                 f"spawn({n}) excede a capacidade: {self.count} usados de "

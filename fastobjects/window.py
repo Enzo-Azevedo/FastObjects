@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import time
+from typing import Callable
+
 import glfw
 import moderngl
 
@@ -50,6 +53,7 @@ class Window:
         self.ctx.enable(moderngl.BLEND)
         self.width = width
         self.height = height
+        self._update: Callable[[float], None] | None = None
         _context.set_current(self)
 
     @property
@@ -64,6 +68,45 @@ class Window:
 
     def swap(self) -> None:
         glfw.swap_buffers(self._win)
+
+    def frame(self, fn: Callable[[float], None]) -> Callable[[float], None]:
+        """Decorator: registra fn(dt) como o update chamado por run().
+
+        Registrar uma nova função substitui a anterior.
+        """
+        self._update = fn
+        return fn
+
+    def draw(self, *batches) -> None:
+        """Desenha cada batch na ordem dada (açúcar para batch.draw())."""
+        for batch in batches:
+            batch.draw()
+
+    def request_close(self) -> None:
+        """Pede o fim do loop: should_close passa a True e run() retorna."""
+        glfw.set_window_should_close(self._win, True)
+
+    def run(self) -> None:
+        """Executa o loop de frames até a janela fechar.
+
+        Por frame: poll de eventos, dt real (perf_counter), update(dt), swap.
+
+        Raises:
+            RuntimeError: se nenhuma função foi registrada com @win.frame.
+        """
+        if self._update is None:
+            raise RuntimeError(
+                "Nenhuma função de frame registrada — decore seu update com "
+                "@win.frame antes de chamar win.run()."
+            )
+        last = time.perf_counter()
+        while not self.should_close:
+            self.poll()
+            now = time.perf_counter()
+            dt = now - last
+            last = now
+            self._update(dt)
+            self.swap()
 
     def close(self) -> None:
         if _context.get_current() is self:

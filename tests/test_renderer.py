@@ -1,4 +1,4 @@
-import moderngl
+﻿import moderngl
 import numpy as np
 import pytest
 
@@ -39,7 +39,7 @@ def test_renders_red_sprite_at_center(gl):
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     renderer = SpriteRenderer(ctx, white_texture(ctx), capacity=16, view_size=(64, 64))
     cols = make_sprite_cols(32, 32, 16, 16, 0.0, (1.0, 0.0, 0.0, 1.0))
-    renderer.render(cols, 1, set())
+    renderer.render(cols, 1, {"size", "rot", "color"})
     px = read_pixels(fbo)
     center = px[32, 32]
     assert center[0] > 200 and center[1] < 50 and center[2] < 50  # vermelho
@@ -61,7 +61,8 @@ def test_sprite_y_axis_points_down(gl):
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     renderer = SpriteRenderer(ctx, white_texture(ctx), capacity=16, view_size=(64, 64))
     cols = make_sprite_cols(32, 8, 10, 10, 0.0, (0.0, 1.0, 0.0, 1.0))  # y=8: perto do TOPO
-    renderer.render(cols, 1, set())
+    renderer.render(cols, 1, {"size", "rot", "color"})
     px = read_pixels(fbo)
     assert px[8, 32][1] > 200   # verde no topo
     assert px[56, 32][1] < 10   # nada embaixo
+

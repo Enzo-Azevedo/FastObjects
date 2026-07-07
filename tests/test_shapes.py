@@ -1,4 +1,4 @@
-import moderngl
+﻿import moderngl
 import numpy as np
 import pytest
 
@@ -35,7 +35,7 @@ def test_rect_fills_pixels(gl):
     ctx, fbo = gl
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     r = _ShapeRenderer(ctx, capacity=16, view_size=(64, 64))
-    r.render(shape_cols(32, 32, 20, 20, 0.0, (1.0, 0.0, 0.0, 1.0), KIND_RECT), 1, set())
+    r.render(shape_cols(32, 32, 20, 20, 0.0, (1.0, 0.0, 0.0, 1.0), KIND_RECT), 1, {"size", "rot", "color", "kind"})
     px = read_pixels(fbo)
     assert px[32, 32][0] > 200  # centro vermelho
     assert px[32, 24][0] > 200  # dentro da borda esquerda (22 < 24)
@@ -47,7 +47,7 @@ def test_circle_sdf_cuts_corners(gl):
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     r = _ShapeRenderer(ctx, capacity=16, view_size=(64, 64))
     # bounding box 24x24 -> raio 12, centrado em (32, 32)
-    r.render(shape_cols(32, 32, 24, 24, 0.0, (0.0, 1.0, 0.0, 1.0), KIND_CIRCLE), 1, set())
+    r.render(shape_cols(32, 32, 24, 24, 0.0, (0.0, 1.0, 0.0, 1.0), KIND_CIRCLE), 1, {"size", "rot", "color", "kind"})
     px = read_pixels(fbo)
     assert px[32, 32][1] > 200  # centro verde
     assert px[22, 32][1] > 200  # 10px acima do centro: dentro do raio 12
@@ -174,3 +174,4 @@ def test_diagonal_line_exercises_rotation(gl):
     assert px[32, 32][0] > 200  # meio da diagonal
     assert px[16, 48][0] < 10  # fora da diagonal (canto oposto)
     assert px[48, 16][0] < 10
+

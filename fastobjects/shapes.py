@@ -54,6 +54,8 @@ class _ShapeRenderer:
 
     def _upload(self, cols: dict[str, np.ndarray], count: int, dirty: set[str]) -> None:
         for name in self.COLUMNS:
+            if name != "pos" and name not in dirty:
+                continue  # coluna fria não tocada: a GPU já tem o valor
             self.buffers[name].write(cols[name][:count])
             self.uploads += 1
 

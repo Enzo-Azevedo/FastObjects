@@ -6,8 +6,8 @@ import moderngl
 import numpy as np
 
 from fastobjects import _context
+from fastobjects._batchcore import BatchCore
 from fastobjects.core.shaders import SHAPE_FS, SHAPE_VS
-from fastobjects.errors import CapacityError
 from fastobjects.group import SpriteGroup
 
 SHAPE_FLOATS = 10  # x, y, w, h, rot, r, g, b, a, kind
@@ -59,7 +59,7 @@ class _ShapeRenderer:
         self.vao.render(moderngl.TRIANGLE_STRIP, vertices=4, instances=count)
 
 
-class ShapeBatch:
+class ShapeBatch(BatchCore):
     """Lote de primitivas 2D (retângulo, círculo, linha) em um draw call.
 
     O estado vive em `data` (capacity, 10): x, y, w, h, rot, r, g, b, a, kind.
@@ -80,29 +80,9 @@ class ShapeBatch:
         ctx: moderngl.Context | None = None,
         view_size: tuple[int, int] | None = None,
     ) -> None:
-        if capacity <= 0:
-            raise ValueError(
-                f"capacity={capacity} inválida: use um valor > 0 "
-                "(quantidade máxima de formas do lote)."
-            )
+        super().__init__(capacity, SHAPE_FLOATS, "formas")
         ctx, view_size = _context.resolve(ctx, view_size)
-        self.capacity = capacity
-        self.count = 0
-        self.data = np.zeros((capacity, SHAPE_FLOATS), dtype="f4")
         self._renderer = _ShapeRenderer(ctx, capacity, view_size)
-
-    def _alloc(self, n: int, method: str) -> slice:
-        """Reserva n linhas contíguas; guards idênticos aos do SpriteBatch."""
-        if n < 0:
-            raise ValueError(f"{method}({n}): n não pode ser negativo. Use n >= 0.")
-        if self.count + n > self.capacity:
-            raise CapacityError(
-                f"{method}({n}) excede a capacidade: {self.count} usados de "
-                f"{self.capacity}. Crie o batch com capacity={self.count + n} ou mais."
-            )
-        s = slice(self.count, self.count + n)
-        self.count += n
-        return s
 
     def rects(
         self,
@@ -124,7 +104,7 @@ class ShapeBatch:
         d[s, 4] = rot
         d[s, 5:9] = color
         d[s, 9] = KIND_RECT
-        return SpriteGroup(self, s)
+        return self._make_group(s)
 
     def circles(
         self,
@@ -145,7 +125,7 @@ class ShapeBatch:
         d[s, 4] = 0.0
         d[s, 5:9] = color
         d[s, 9] = KIND_CIRCLE
-        return SpriteGroup(self, s)
+        return self._make_group(s)
 
     def lines(
         self,
@@ -177,12 +157,4 @@ class ShapeBatch:
         d[s, 4] = np.arctan2(dy, dx)
         d[s, 5:9] = color
         d[s, 9] = KIND_RECT
-        return SpriteGroup(self, s)
-
-    def clear(self) -> None:
-        """Remove todas as formas (O(1): só reseta o contador)."""
-        self.count = 0
-
-    def draw(self) -> None:
-        """Sobe o estado atual e desenha o lote inteiro em um draw call."""
-        self._renderer.render(self.data, self.count)
+        return self._make_group(s)

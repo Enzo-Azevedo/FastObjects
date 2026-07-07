@@ -93,3 +93,44 @@ def test_getitem_requires_slice_without_step(ctx):
         g[0]
     with pytest.raises(ValueError, match="step"):
         g[::2]
+
+
+def test_clear_invalidates_groups(ctx):
+    batch = make_batch(ctx)
+    g = batch.spawn(5)
+    batch.clear()
+    with pytest.raises(RuntimeError, match="removido"):
+        g.x
+    with pytest.raises(RuntimeError, match="removido"):
+        g.x = 1.0
+    with pytest.raises(RuntimeError, match="removido"):
+        len(g)
+    with pytest.raises(RuntimeError, match="removido"):
+        g[0:1]
+
+
+def test_shapebatch_clear_invalidates_groups(ctx):
+    from fastobjects.shapes import ShapeBatch
+
+    batch = ShapeBatch(capacity=10, ctx=ctx, view_size=(64, 64))
+    g = batch.rects(3)
+    batch.clear()
+    with pytest.raises(RuntimeError, match="removido"):
+        g.color
+
+
+def test_subgroup_is_registered_and_invalidated_by_clear(ctx):
+    batch = make_batch(ctx)
+    g = batch.spawn(10)
+    sub = g[2:5]
+    batch.clear()
+    with pytest.raises(RuntimeError, match="removido"):
+        sub.y
+
+
+def test_new_groups_after_clear_work(ctx):
+    batch = make_batch(ctx)
+    batch.spawn(5)
+    batch.clear()
+    fresh = batch.spawn(3, x=9.0)
+    np.testing.assert_allclose(fresh.x, 9.0)

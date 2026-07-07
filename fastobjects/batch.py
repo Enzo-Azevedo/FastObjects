@@ -9,12 +9,12 @@ import numpy as np
 from PIL import Image
 
 from fastobjects import _context
+from fastobjects._batchcore import BatchCore
 from fastobjects.core.renderer import FLOATS_PER_SPRITE, SpriteRenderer
-from fastobjects.errors import CapacityError
 from fastobjects.group import SpriteGroup
 
 
-class SpriteBatch:
+class SpriteBatch(BatchCore):
     """Lote de sprites com a mesma textura, desenhado em um draw call.
 
     O estado vive em `data` (capacity, 9): x, y, w, h, rot, r, g, b, a.
@@ -36,11 +36,7 @@ class SpriteBatch:
         ctx: moderngl.Context | None = None,
         view_size: tuple[int, int] | None = None,
     ) -> None:
-        if capacity <= 0:
-            raise ValueError(
-                f"capacity={capacity} inválida: use um valor > 0 "
-                "(quantidade máxima de sprites do lote)."
-            )
+        super().__init__(capacity, FLOATS_PER_SPRITE, "sprites")
         ctx, view_size = _context.resolve(ctx, view_size)
         path = Path(texture_path)
         if not path.is_file():
@@ -51,9 +47,6 @@ class SpriteBatch:
         img = Image.open(path).convert("RGBA")
         texture = ctx.texture(img.size, 4, data=img.tobytes())
         self.texture_size = img.size
-        self.capacity = capacity
-        self.count = 0
-        self.data = np.zeros((capacity, FLOATS_PER_SPRITE), dtype="f4")
         self.pos = self.data[:, 0:2]
         self.size = self.data[:, 2:4]
         self.rot = self.data[:, 4]
@@ -79,29 +72,11 @@ class SpriteBatch:
             ValueError: se n for negativo.
             CapacityError: se n não couber; a mensagem diz a capacity necessária.
         """
-        if n < 0:
-            raise ValueError(
-                f"spawn({n}): n não pode ser negativo. Use n >= 0."
-            )
-        if self.count + n > self.capacity:
-            raise CapacityError(
-                f"spawn({n}) excede a capacidade: {self.count} usados de "
-                f"{self.capacity}. Crie o batch com capacity={self.count + n} ou mais."
-            )
-        s = slice(self.count, self.count + n)
+        s = self._alloc(n, "spawn")
         self.pos[s, 0] = x
         self.pos[s, 1] = y
         self.size[s, 0] = self.texture_size[0] if w is None else w
         self.size[s, 1] = self.texture_size[1] if h is None else h
         self.rot[s] = rot
         self.color[s] = color
-        self.count += n
-        return SpriteGroup(self, s)
-
-    def clear(self) -> None:
-        """Remove todos os sprites (O(1): só reseta o contador)."""
-        self.count = 0
-
-    def draw(self) -> None:
-        """Sobe o estado atual e desenha o lote inteiro em um draw call."""
-        self._renderer.render(self.data, self.count)
+        return self._make_group(s)

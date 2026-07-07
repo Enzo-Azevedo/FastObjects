@@ -50,6 +50,34 @@ win.run()
   debug overlays or non-textured geometry.
 - `win.draw(*batches)` issues one draw call per batch, in the order given.
 
+## Why it's fast
+
+FastObjects is written in Python, but the hot path isn't: sprite/shape state
+lives in flat NumPy arrays, and each `batch.draw()` uploads the whole array
+and issues a **single OpenGL draw call** (via `moderngl`) for the entire
+batch — no per-object Python loop, no per-object GPU call. The interpreter
+overhead that usually kills naive Python renderers never touches the
+per-sprite path.
+
+## Benchmarks
+
+Sprites sustained at 60 fps, measured on the same machine (AMD Radeon RX 580,
+Python 3.13) against other Python rendering libraries — see
+[`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for methodology and full
+history:
+
+| Framework | Sprites @ 60 fps |
+|---|---|
+| **fastobjects** | **218,809** |
+| arcade | 5,692 |
+| raylib | 5,692 |
+| pyglet | 3,795 |
+| pygame-ce | 1,687 |
+
+Note: raylib and pygame-ce numbers above reflect a specific run in that
+history file — check [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for the full, dated series and
+hardware details before quoting a number as "current".
+
 ## Development
 
 Install with development dependencies:

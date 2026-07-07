@@ -11,6 +11,7 @@ from PIL import Image
 from fastobjects import _context
 from fastobjects.core.renderer import FLOATS_PER_SPRITE, SpriteRenderer
 from fastobjects.errors import CapacityError
+from fastobjects.group import SpriteGroup
 
 
 class SpriteBatch:
@@ -68,11 +69,11 @@ class SpriteBatch:
         h: float | np.ndarray | None = None,
         rot: float | np.ndarray = 0.0,
         color: tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
-    ) -> slice:
+    ) -> SpriteGroup:
         """Adiciona n sprites. Aceita escalares ou arrays de tamanho n.
 
         Returns:
-            O slice das linhas recém-criadas em `data`/views.
+            SpriteGroup das linhas recém-criadas (views escrevem no batch).
 
         Raises:
             ValueError: se n for negativo.
@@ -95,7 +96,7 @@ class SpriteBatch:
         self.rot[s] = rot
         self.color[s] = color
         self.count += n
-        return s
+        return SpriteGroup(self, s)
 
     def clear(self) -> None:
         """Remove todos os sprites (O(1): só reseta o contador)."""

@@ -23,9 +23,9 @@ def test_spawn_scalar_fills_rows(gl):
     batch = SpriteBatch(BUNNY, capacity=100, ctx=ctx, view_size=(64, 64))
     s = batch.spawn(10, x=5.0, y=7.0)
     assert batch.count == 10
-    assert s == slice(0, 10)
-    np.testing.assert_allclose(batch.pos[s][:, 0], 5.0)
-    np.testing.assert_allclose(batch.pos[s][:, 1], 7.0)
+    assert s.slice == slice(0, 10)
+    np.testing.assert_allclose(s.x, 5.0)
+    np.testing.assert_allclose(s.y, 7.0)
     assert batch.size[0, 0] == 26.0  # largura da textura bunny.png
     assert batch.size[0, 1] == 37.0
 
@@ -43,7 +43,7 @@ def test_spawn_appends_after_existing(gl):
     batch = SpriteBatch(BUNNY, capacity=100, ctx=ctx, view_size=(64, 64))
     batch.spawn(10)
     s2 = batch.spawn(5, x=99.0)
-    assert s2 == slice(10, 15)
+    assert s2.slice == slice(10, 15)
     assert batch.count == 15
 
 

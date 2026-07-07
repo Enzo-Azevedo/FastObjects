@@ -55,6 +55,40 @@ class BatchCore:
         self._register(group)
         return group
 
+    def despawn(self, group: SpriteGroup) -> None:
+        """Remove as linhas do grupo, compactando o array (1 cópia vetorizada).
+
+        Os demais grupos vivos são realocados automaticamente: grupos
+        posteriores deslocam para a esquerda; um grupo que contém o trecho
+        removido (pai de sub-grupo) encolhe. O grupo removido — e sub-grupos
+        contidos nele — ficam inválidos.
+
+        Raises:
+            ValueError: se o grupo pertence a outro batch.
+            RuntimeError: se o grupo já foi removido.
+        """
+        if group._batch is not self:
+            raise ValueError(
+                "despawn: o grupo pertence a outro batch — chame despawn "
+                "no batch que o criou."
+            )
+        group._check_alive()
+        start, stop = group._slice.start, group._slice.stop
+        n = stop - start
+        if n:
+            self.data[start : self.count - n] = self.data[stop : self.count]
+            self.count -= n
+        for g in list(self._groups):
+            gs, ge = g._slice.start, g._slice.stop
+            if g is group or (gs >= start and ge <= stop):
+                g._alive = False
+                self._groups.discard(g)
+            elif gs >= stop:
+                g._slice = slice(gs - n, ge - n)
+            elif gs <= start and ge >= stop:
+                g._slice = slice(gs, ge - n)
+            # senão: termina antes do trecho removido — intacto.
+
     def clear(self) -> None:
         """Remove todos os objetos e invalida todos os handles de grupos."""
         self.count = 0

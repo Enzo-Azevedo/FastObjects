@@ -58,3 +58,12 @@ def test_draw_calls_batches_in_order(win):
 
     win.draw(Fake("a"), Fake("b"))
     assert calls == ["a", "b"]
+
+
+def test_closed_window_raises_instead_of_crashing():
+    w = Window(320, 240, "closed", visible=False)
+    w.close()
+    with pytest.raises(RuntimeError, match="fechada"):
+        w.request_close()
+    with pytest.raises(RuntimeError, match="fechada"):
+        w.run()

@@ -62,8 +62,15 @@ class Window:
         glfw.set_mouse_button_callback(self._win, self.mouse._on_button)
         _context.set_current(self)
 
+    def _require_open(self) -> None:
+        if self._win is None:
+            raise RuntimeError(
+                "Janela já fechada — crie uma nova fo.Window(...) antes de usá-la."
+            )
+
     @property
     def should_close(self) -> bool:
+        self._require_open()
         return bool(glfw.window_should_close(self._win))
 
     def poll(self) -> None:
@@ -73,6 +80,7 @@ class Window:
         self.ctx.clear(r, g, b, 1.0)
 
     def swap(self) -> None:
+        self._require_open()
         glfw.swap_buffers(self._win)
 
     def frame(self, fn: Callable[[float], None]) -> Callable[[float], None]:
@@ -90,6 +98,7 @@ class Window:
 
     def request_close(self) -> None:
         """Pede o fim do loop: should_close passa a True e run() retorna."""
+        self._require_open()
         glfw.set_window_should_close(self._win, True)
 
     def run(self) -> None:
@@ -100,6 +109,7 @@ class Window:
         Raises:
             RuntimeError: se nenhuma função foi registrada com @win.frame.
         """
+        self._require_open()
         if self._update is None:
             raise RuntimeError(
                 "Nenhuma função de frame registrada — decore seu update com "

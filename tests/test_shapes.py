@@ -155,3 +155,18 @@ def test_shapebatch_exported():
     import fastobjects as fo
 
     assert fo.ShapeBatch is not None
+
+
+def test_diagonal_line_exercises_rotation(gl):
+    from fastobjects.shapes import ShapeBatch
+
+    ctx, fbo = gl
+    fbo.clear(0.0, 0.0, 0.0, 1.0)
+    batch = ShapeBatch(capacity=10, ctx=ctx, view_size=(64, 64))
+    batch.lines(1, x1=10.0, y1=10.0, x2=54.0, y2=54.0, width=3.0,
+                color=(1.0, 0.0, 1.0, 1.0))
+    batch.draw()
+    px = read_pixels(fbo)
+    assert px[32, 32][0] > 200  # meio da diagonal
+    assert px[16, 48][0] < 10  # fora da diagonal (canto oposto)
+    assert px[48, 16][0] < 10

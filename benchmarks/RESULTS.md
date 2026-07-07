@@ -62,7 +62,7 @@ reprodutível. Mantém-se a implementação atual (mais simples, sem
 orphan/double-buffer) por não haver ganho demonstrado. Perdedoras
 documentadas acima — não retestar sem mudança de hardware ou de driver.
 
-## Arena 2026-07-06
+## Arena 2026-07-06 (pós-fase 4 API)
 
 - Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
 - Python 3.13.13 | Windows 10

@@ -9,6 +9,7 @@ import glfw
 import moderngl
 
 from fastobjects import _context
+from fastobjects.input import Keyboard, Mouse
 
 
 class Window:
@@ -54,6 +55,11 @@ class Window:
         self.width = width
         self.height = height
         self._update: Callable[[float], None] | None = None
+        self.keys = Keyboard()
+        self.mouse = Mouse()
+        glfw.set_key_callback(self._win, self.keys._on_key)
+        glfw.set_cursor_pos_callback(self._win, self.mouse._on_move)
+        glfw.set_mouse_button_callback(self._win, self.mouse._on_button)
         _context.set_current(self)
 
     @property

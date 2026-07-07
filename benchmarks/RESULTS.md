@@ -87,3 +87,37 @@ documentadas acima — não retestar sem mudança de hardware ou de driver.
 | raylib | 5,692 | 13.131 | 20.092 |
 | pygame-ce | 3,795 | 13.859 | 22.227 |
 | pyglet | 3,795 | 14.261 | 21.001 |
+
+## Benchmark externo 2026-07-07: benchmark_2d.py (escalabilidade objetos x FPS)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+- Protocolo: benchmarks/benchmark_2d.py (script de comparacao fornecido pelo usuario,
+  secao fastobjects implementada com a API real v0.2.0: Window + ShapeBatch.rects
+  vetorizado). Janela 800x600, retangulos 6x6 coloridos, 3s de medicao por ponto,
+  cada medicao em subprocesso isolado, foreground.
+
+| N objetos | pygame-ce | pyglet | moderngl (cru) | fastobjects | fo vs pygame | fo vs teto moderngl |
+|---|---|---|---|---|---|---|
+| 100 | 776.1 | 228.0 | 3180.5 | 3050.2 | 3.9x | 96% |
+| 1.000 | 256.8 | 124.5 | 2993.0 | 2715.5 | 10.6x | 91% |
+| 5.000 | 74.6 | 24.5 | 2719.4 | 2155.7 | 28.9x | 79% |
+| 10.000 | 42.3 | 11.9 | 2413.9 | 1502.9 | 35.5x | 62% |
+| 50.000 | 8.5 | 2.2 | 829.3 | 375.5 | 44.2x | 45% |
+| 100.000 | 4.6 | 0.9 | 429.9 | 175.7 | 38.2x | 41% |
+
+**Conclusoes:**
+- Progresso confirmado, sem retrocesso: 38x sobre pygame-ce em 100k objetos e ~195x
+  sobre pyglet - coerente com a arena (218.809 sprites @ 60fps, ~38x).
+- A coluna "moderngl (cru)" e o teto teorico da tecnica: um renderer minimo hardcoded
+  (so offsets de 8 bytes/instancia, sem rotacao, sem blend, cores estaticas).
+  O fastobjects entrega 41-96% desse teto COM a API completa (10 floats/instancia,
+  rotacao, blending, kind por forma). O gap cresce com N (dominado pelo volume de
+  upload 5x maior) - candidato a lab futuro: upload parcial/dirty tracking.
+- Incidente de medicao documentado: a primeira execucao (em job de background) mediu
+  os benches GL a ~10 FPS - throttling de apresentacao do Windows para janelas GL de
+  processos em background (pygame por software nao e afetado). Benchmarks GL nesta
+  maquina DEVEM rodar em foreground.
+- pyglet: o app.run() nao e re-executavel no mesmo processo (media 0.0 FPS da 2a
+  rodada em diante); o script foi corrigido para subprocesso por medicao - mesmo
+  protocolo da arena - o que tambem eliminou janelas-zumbi acumulando na tela.

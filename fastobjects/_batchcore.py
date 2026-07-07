@@ -61,7 +61,8 @@ class BatchCore:
         Os demais grupos vivos são realocados automaticamente: grupos
         posteriores deslocam para a esquerda; um grupo que contém o trecho
         removido (pai de sub-grupo) encolhe. O grupo removido — e sub-grupos
-        contidos nele — ficam inválidos.
+        contidos nele — ficam inválidos. Sub-grupos que se sobrepõem
+        parcialmente ao trecho removido também são invalidados.
 
         Raises:
             ValueError: se o grupo pertence a outro batch.
@@ -87,6 +88,11 @@ class BatchCore:
                 g._slice = slice(gs - n, ge - n)
             elif gs <= start and ge >= stop:
                 g._slice = slice(gs, ge - n)
+            elif gs < stop and ge > start:
+                # sobreposição parcial não-aninhada (irmãos de sub-slice):
+                # realocação segura é impossível — invalida conservadoramente.
+                g._alive = False
+                self._groups.discard(g)
             # senão: termina antes do trecho removido — intacto.
 
     def clear(self) -> None:

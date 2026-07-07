@@ -27,8 +27,8 @@ def require_current() -> Window:
     """Retorna a janela atual ou levanta um erro acionável."""
     if _current is None:
         raise RuntimeError(
-            "Nenhuma janela ativa. Crie fo.Window(...) antes de criar batches, "
-            "ou passe ctx= e view_size= explicitamente."
+            "Nenhuma janela ativa. Crie fo.Window(...), conecte-se ao host com "
+            "fo.attach(...), ou passe ctx= e view_size= explicitamente."
         )
     return _current
 

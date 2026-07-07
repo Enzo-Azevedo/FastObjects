@@ -121,6 +121,7 @@ def main() -> None:
                 running = False
 
     count = batch.count
+    ext.close()
     pygame.quit()
     print(f"interop ok: {frame} frames, {count} sprites")
 

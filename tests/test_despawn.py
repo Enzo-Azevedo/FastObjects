@@ -123,6 +123,20 @@ def test_despawn_after_despawn_chain(gl):
     np.testing.assert_allclose(c.x, 3.0)
 
 
+def test_despawn_invalidates_partially_overlapping_siblings(gl):
+    ctx, _ = gl
+    batch = make_batch(ctx)
+    g = batch.spawn(10, x=np.arange(10, dtype=np.float32))
+    a = g[3:6]
+    b = g[4:7]  # irmão parcialmente sobreposto a `a`
+    left = g[0:2]  # antes do trecho: continua válido
+    batch.despawn(a)
+    with pytest.raises(RuntimeError, match="removido"):
+        b.x
+    np.testing.assert_allclose(left.x, [0.0, 1.0])
+    assert len(g) == 7  # pai encolheu normalmente
+
+
 def test_shapebatch_despawn_works_the_same(gl):
     ctx, _ = gl
     batch = ShapeBatch(capacity=10, ctx=ctx, view_size=(64, 64))

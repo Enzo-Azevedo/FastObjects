@@ -95,8 +95,8 @@ sub-grupo no batch.
    - contém o trecho (`g.start <= start and g.stop >= stop`, ex.: pai de sub-grupo):
      encolhe `n` (stop -= n);
    - é o próprio grupo ou está contido nele: **invalidado**.
-   (Sobreposição parcial não-aninhada é impossível por construção: grupos são disjuntos
-   ou aninhados via sub-slice.)
+   - sobreposição parcial não-aninhada (sub-grupos irmãos como g[3:6] e g[4:7]):
+     **invalidado** conservadoramente — realocação segura é impossível.
 4. Grupo invalidado: qualquer acesso a propriedade/len/getitem levanta `RuntimeError`
    acionável ("grupo removido do batch — spawn() de novo para criar objetos").
 

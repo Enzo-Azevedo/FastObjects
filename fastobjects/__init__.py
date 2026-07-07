@@ -6,6 +6,7 @@ from fastobjects.batch import SpriteBatch
 from fastobjects.errors import CapacityError
 from fastobjects.external import ExternalWindow, attach
 from fastobjects.group import SpriteGroup
+from fastobjects.layer import SurfaceLayer
 from fastobjects.shapes import ShapeBatch
 from fastobjects.window import Window
 
@@ -16,6 +17,7 @@ __all__ = [
     "ShapeBatch",
     "SpriteBatch",
     "SpriteGroup",
+    "SurfaceLayer",
     "Window",
     "__version__",
     "attach",

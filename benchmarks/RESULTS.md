@@ -121,3 +121,23 @@ documentadas acima — não retestar sem mudança de hardware ou de driver.
 - pyglet: o app.run() nao e re-executavel no mesmo processo (media 0.0 FPS da 2a
   rodada em diante); o script foi corrigido para subprocesso por medicao - mesmo
   protocolo da arena - o que tambem eliminou janelas-zumbi acumulando na tela.
+
+## Lab 2026-07-07: layout SoA + quantizacao (exp_soa_layout.py)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- N=100.000, 300 frames, 5 runs (reportado o MINIMO de 5 - isola custo intrinseco do ruido do SO), contexto standalone
+
+| Estrategia | Cenario 1: so posicoes (ms/frame) | Cenario 2: tudo muda (ms/frame) |
+|---|---|---|
+| A  AoS write total (36B/inst, atual) | 3.949 | 4.293 |
+| B  SoA f4 (pos 8B; frias so quando mudam) | 0.997 | 3.186 |
+| B' SoA f4 com orphan no pos | 1.011 | - |
+| C  SoA quantizado (frias u8/f16) | 0.974 | 7.712 |
+
+**Decisao: B (SoA f4 puro) adotada.**
+- SoA vence AoS por 4.0x no frame tipico e 1.35x no pior caso.
+- Quantizacao (C) REJEITADA: empata com B no caso tipico (as colunas frias nem
+  sobem) e e 2.4x PIOR que B no pior caso - o astype f2/u8 na CPU custa mais do
+  que economiza de upload. Perdedora documentada; nao retestar sem mudanca de
+  hardware/driver ou conversao vetorizada mais barata.
+- orphan REJEITADO de novo (empate, consistente com o lab da Fase 1-3).

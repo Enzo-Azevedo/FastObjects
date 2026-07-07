@@ -4,12 +4,22 @@ import glfw as _glfw
 
 from fastobjects.batch import SpriteBatch
 from fastobjects.errors import CapacityError
+from fastobjects.external import ExternalWindow, attach
 from fastobjects.group import SpriteGroup
 from fastobjects.shapes import ShapeBatch
 from fastobjects.window import Window
 
 __version__ = "0.1.0"
-__all__ = ["CapacityError", "ShapeBatch", "SpriteBatch", "SpriteGroup", "Window", "__version__"]
+__all__ = [
+    "CapacityError",
+    "ExternalWindow",
+    "ShapeBatch",
+    "SpriteBatch",
+    "SpriteGroup",
+    "Window",
+    "__version__",
+    "attach",
+]
 
 # Constantes de input (fo.KEY_SPACE, fo.MOUSE_BUTTON_LEFT, ...): re-export
 # direto do glfw — zero manutenção própria.

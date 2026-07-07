@@ -74,3 +74,16 @@ documentadas acima — não retestar sem mudança de hardware ou de driver.
 | raylib | 5,692 | 13.87 | 21.014 |
 | pyglet | 3,795 | 12.789 | 17.752 |
 | pygame-ce | 1,687 | 8.287 | 16.372 |
+
+## Arena 2026-07-07 (pós-interop)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Sprites @ 60fps | avg ms (último trial ok) | p99 ms |
+|---|---|---|---|
+| fastobjects | 218,809 | 14.867 | 18.647 |
+| arcade | 5,692 | 14.152 | 23.43 |
+| raylib | 5,692 | 13.131 | 20.092 |
+| pygame-ce | 3,795 | 13.859 | 22.227 |
+| pyglet | 3,795 | 14.261 | 21.001 |

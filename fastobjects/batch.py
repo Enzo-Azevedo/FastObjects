@@ -1,4 +1,4 @@
-"""SpriteBatch: sprites como linhas de um array NumPy, nunca objetos Python."""
+"""SpriteBatch: sprites como colunas de arrays NumPy, nunca objetos Python."""
 
 from __future__ import annotations
 
@@ -10,15 +10,16 @@ from PIL import Image
 
 from fastobjects import _context
 from fastobjects._batchcore import BatchCore
-from fastobjects.core.renderer import FLOATS_PER_SPRITE, SpriteRenderer
+from fastobjects.core.renderer import SpriteRenderer
 from fastobjects.group import SpriteGroup
 
 
 class SpriteBatch(BatchCore):
     """Lote de sprites com a mesma textura, desenhado em um draw call.
 
-    O estado vive em `data` (capacity, 9): x, y, w, h, rot, r, g, b, a.
-    As views `pos`, `size`, `rot`, `color` escrevem direto em `data`.
+    O estado vive em colunas SoA (`pos`, `size`, `rot`, `color` — todas f4);
+    as views escrevem direto nas colunas. Por frame, o draw sobe as posições
+    sempre e as demais colunas só quando tocadas (ver BatchCore).
 
     Args:
         texture_path: caminho de uma imagem (qualquer formato PIL).
@@ -36,7 +37,7 @@ class SpriteBatch(BatchCore):
         ctx: moderngl.Context | None = None,
         view_size: tuple[int, int] | None = None,
     ) -> None:
-        super().__init__(capacity, FLOATS_PER_SPRITE, "sprites")
+        super().__init__(capacity, "sprites")
         ctx, view_size = _context.resolve(ctx, view_size)
         path = Path(texture_path)
         if not path.is_file():
@@ -47,10 +48,6 @@ class SpriteBatch(BatchCore):
         img = Image.open(path).convert("RGBA")
         texture = ctx.texture(img.size, 4, data=img.tobytes())
         self.texture_size = img.size
-        self.pos = self.data[:, 0:2]
-        self.size = self.data[:, 2:4]
-        self.rot = self.data[:, 4]
-        self.color = self.data[:, 5:9]
         self._renderer = SpriteRenderer(ctx, texture, capacity, view_size)
 
     def spawn(
@@ -73,10 +70,11 @@ class SpriteBatch(BatchCore):
             CapacityError: se n não couber; a mensagem diz a capacity necessária.
         """
         s = self._alloc(n, "spawn")
-        self.pos[s, 0] = x
-        self.pos[s, 1] = y
-        self.size[s, 0] = self.texture_size[0] if w is None else w
-        self.size[s, 1] = self.texture_size[1] if h is None else h
-        self.rot[s] = rot
-        self.color[s] = color
+        cols = self._cols
+        cols["pos"][s, 0] = x
+        cols["pos"][s, 1] = y
+        cols["size"][s, 0] = self.texture_size[0] if w is None else w
+        cols["size"][s, 1] = self.texture_size[1] if h is None else h
+        cols["rot"][s] = rot
+        cols["color"][s] = color
         return self._make_group(s)

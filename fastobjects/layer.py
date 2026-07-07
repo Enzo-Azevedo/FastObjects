@@ -37,8 +37,13 @@ class SurfaceLayer:
         self._size = (int(w), int(h))
         self._texture = ctx.texture(self._size, 4)
         self._renderer = SpriteRenderer(ctx, self._texture, 1, view_size)
-        self._data = np.zeros((1, 9), dtype="f4")
-        self._data[0] = [w / 2.0, h / 2.0, w, h, 0.0, 1.0, 1.0, 1.0, 1.0]
+        self._cols = {
+            "pos": np.array([[w / 2.0, h / 2.0]], dtype="f4"),
+            "size": np.array([[float(w), float(h)]], dtype="f4"),
+            "rot": np.zeros(1, dtype="f4"),
+            "color": np.ones((1, 4), dtype="f4"),
+        }
+        self._dirty = {"size", "rot", "color"}  # 1º draw sobe tudo; depois só pos
 
     def update(self) -> None:
         """Sobe o conteúdo atual da surface para a GPU (1 upload).
@@ -63,4 +68,5 @@ class SurfaceLayer:
 
     def draw(self) -> None:
         """Desenha a surface na tela (1 draw call)."""
-        self._renderer.render(self._data, 1)
+        self._renderer.render(self._cols, 1, self._dirty)
+        self._dirty = set()

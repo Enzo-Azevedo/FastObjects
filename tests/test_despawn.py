@@ -29,7 +29,7 @@ def test_despawn_compacts_and_frees_capacity(gl):
     batch.spawn(4, x=2.0)
     batch.despawn(a)
     assert batch.count == 4
-    np.testing.assert_allclose(batch.data[:4, 0], 2.0)  # sobrevivente compactado
+    np.testing.assert_allclose(batch.pos[:4, 0], 2.0)  # sobrevivente compactado
     batch.spawn(6)  # capacity devolvida: não levanta
 
 
@@ -39,9 +39,10 @@ def test_despawn_preserves_neighbor_data_exactly(gl):
     a = batch.spawn(3, x=np.array([1.0, 2.0, 3.0], dtype=np.float32))
     middle = batch.spawn(2, x=99.0)
     c = batch.spawn(3, x=np.array([7.0, 8.0, 9.0], dtype=np.float32))
-    before_a = batch.data[0:3].copy()
+    before_a = {name: arr[0:3].copy() for name, arr in batch._cols.items()}
     batch.despawn(middle)
-    np.testing.assert_array_equal(batch.data[0:3], before_a)  # antes: intacto
+    for name, arr in batch._cols.items():  # antes: intacto, coluna a coluna
+        np.testing.assert_array_equal(arr[0:3], before_a[name])
     np.testing.assert_allclose(c.x, [7.0, 8.0, 9.0])  # depois: realocado, dados ok
     np.testing.assert_allclose(a.x, [1.0, 2.0, 3.0])
 

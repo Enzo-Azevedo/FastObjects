@@ -21,17 +21,21 @@ def read_pixels(fbo) -> np.ndarray:
     return raw[::-1]
 
 
-def shape_row(x, y, w, h, rot, color, kind) -> np.ndarray:
-    row = np.zeros((1, 10), dtype="f4")
-    row[0] = [x, y, w, h, rot, *color, kind]
-    return row
+def shape_cols(x, y, w, h, rot, color, kind) -> dict:
+    return {
+        "pos": np.array([[x, y]], dtype="f4"),
+        "size": np.array([[w, h]], dtype="f4"),
+        "rot": np.array([rot], dtype="f4"),
+        "color": np.array([color], dtype="f4"),
+        "kind": np.array([kind], dtype="f4"),
+    }
 
 
 def test_rect_fills_pixels(gl):
     ctx, fbo = gl
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     r = _ShapeRenderer(ctx, capacity=16, view_size=(64, 64))
-    r.render(shape_row(32, 32, 20, 20, 0.0, (1.0, 0.0, 0.0, 1.0), KIND_RECT), 1)
+    r.render(shape_cols(32, 32, 20, 20, 0.0, (1.0, 0.0, 0.0, 1.0), KIND_RECT), 1, set())
     px = read_pixels(fbo)
     assert px[32, 32][0] > 200  # centro vermelho
     assert px[32, 24][0] > 200  # dentro da borda esquerda (22 < 24)
@@ -43,7 +47,7 @@ def test_circle_sdf_cuts_corners(gl):
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     r = _ShapeRenderer(ctx, capacity=16, view_size=(64, 64))
     # bounding box 24x24 -> raio 12, centrado em (32, 32)
-    r.render(shape_row(32, 32, 24, 24, 0.0, (0.0, 1.0, 0.0, 1.0), KIND_CIRCLE), 1)
+    r.render(shape_cols(32, 32, 24, 24, 0.0, (0.0, 1.0, 0.0, 1.0), KIND_CIRCLE), 1, set())
     px = read_pixels(fbo)
     assert px[32, 32][1] > 200  # centro verde
     assert px[22, 32][1] > 200  # 10px acima do centro: dentro do raio 12
@@ -54,7 +58,7 @@ def test_render_zero_count_is_noop(gl):
     ctx, fbo = gl
     fbo.clear(0.0, 0.0, 0.0, 1.0)
     r = _ShapeRenderer(ctx, capacity=4, view_size=(64, 64))
-    r.render(np.zeros((4, 10), dtype="f4"), 0)
+    r.render(shape_cols(0, 0, 0, 0, 0.0, (0, 0, 0, 0), 0.0), 0, set())
     px = read_pixels(fbo)
     assert px[:, :, :3].max() < 10
 
@@ -69,7 +73,7 @@ def test_rects_fill_rows_and_return_group(gl):
     assert isinstance(g, SpriteGroup)
     assert batch.count == 5
     np.testing.assert_allclose(g.x, 10.0)
-    np.testing.assert_allclose(batch.data[:5, 9], KIND_RECT)
+    np.testing.assert_allclose(batch._cols["kind"][:5], KIND_RECT)
 
 
 def test_circles_store_diameter(gl):
@@ -79,7 +83,7 @@ def test_circles_store_diameter(gl):
     batch = ShapeBatch(capacity=10, ctx=ctx, view_size=(64, 64))
     g = batch.circles(3, x=1.0, y=2.0, radius=5.0)
     np.testing.assert_allclose(g.size, [[10.0, 10.0]] * 3)  # 2 * radius
-    np.testing.assert_allclose(batch.data[:3, 9], KIND_CIRCLE)
+    np.testing.assert_allclose(batch._cols["kind"][:3], KIND_CIRCLE)
 
 
 def test_lines_convert_to_rotated_rects(gl):
@@ -93,7 +97,7 @@ def test_lines_convert_to_rotated_rects(gl):
     np.testing.assert_allclose(g.w, 50.0)  # hypot(30, 40)
     np.testing.assert_allclose(g.h, 2.0)
     np.testing.assert_allclose(g.rot, np.arctan2(40.0, 30.0))
-    assert batch.data[0, 9] == KIND_RECT  # linha é retângulo para o shader
+    assert batch._cols["kind"][0] == KIND_RECT  # linha é retângulo para o shader
 
 
 def test_line_paints_along_segment(gl):

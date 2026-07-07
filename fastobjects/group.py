@@ -1,4 +1,4 @@
-"""SpriteGroup: fatia de um batch com views NumPy que escrevem no array base."""
+"""SpriteGroup: fatia de um batch com views NumPy que escrevem nas colunas SoA."""
 
 from __future__ import annotations
 
@@ -13,17 +13,18 @@ if TYPE_CHECKING:
 class SpriteGroup:
     """Grupo de sprites contíguos de um batch. Um objeto por grupo, nunca por sprite.
 
-    As propriedades são views do array do batch: operações in-place
-    (`group.y += v`) escrevem direto no estado, sem cópia. Funciona para
-    qualquer batch cujo `data` tenha as colunas 0-8 no layout
-    x, y, w, h, rot, r, g, b, a (SpriteBatch e ShapeBatch).
+    As propriedades são views das colunas SoA do batch: operações in-place
+    (`group.y += v`) escrevem direto no estado, sem cópia. Acessar uma
+    propriedade fria (w/h/size/rot/color) marca a coluna para upload no
+    próximo draw — por isso, não guarde uma view entre frames para escrever
+    nela depois: reacesse a propriedade a cada frame (é O(1)).
 
     Após `batch.despawn(grupo)` ou `batch.clear()`, o handle fica inválido:
     qualquer acesso levanta RuntimeError.
 
     Args:
-        batch: dono do array `data` (um BatchCore).
-        s: slice absoluto das linhas deste grupo em `batch.data`.
+        batch: dono das colunas (um BatchCore).
+        s: slice absoluto das linhas deste grupo nas colunas do batch.
     """
 
     def __init__(self, batch: BatchCore, s: slice) -> None:
@@ -40,7 +41,7 @@ class SpriteGroup:
 
     @property
     def slice(self) -> slice:
-        """Slice absoluto das linhas deste grupo no array do batch."""
+        """Slice absoluto das linhas deste grupo nas colunas do batch."""
         self._check_alive()
         return self._slice
 
@@ -68,81 +69,91 @@ class SpriteGroup:
     @property
     def x(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 0]
+        return self._batch._cols["pos"][self._slice, 0]
 
     @x.setter
     def x(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 0] = value
+        self._batch._cols["pos"][self._slice, 0] = value
 
     @property
     def y(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 1]
+        return self._batch._cols["pos"][self._slice, 1]
 
     @y.setter
     def y(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 1] = value
+        self._batch._cols["pos"][self._slice, 1] = value
 
     @property
     def w(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 2]
+        self._batch._dirty.add("size")
+        return self._batch._cols["size"][self._slice, 0]
 
     @w.setter
     def w(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 2] = value
+        self._batch._dirty.add("size")
+        self._batch._cols["size"][self._slice, 0] = value
 
     @property
     def h(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 3]
+        self._batch._dirty.add("size")
+        return self._batch._cols["size"][self._slice, 1]
 
     @h.setter
     def h(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 3] = value
+        self._batch._dirty.add("size")
+        self._batch._cols["size"][self._slice, 1] = value
 
     @property
     def rot(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 4]
+        self._batch._dirty.add("rot")
+        return self._batch._cols["rot"][self._slice]
 
     @rot.setter
     def rot(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 4] = value
+        self._batch._dirty.add("rot")
+        self._batch._cols["rot"][self._slice] = value
 
     # --- blocos ------------------------------------------------------------
 
     @property
     def pos(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 0:2]
+        return self._batch._cols["pos"][self._slice]
 
     @pos.setter
     def pos(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 0:2] = value
+        self._batch._cols["pos"][self._slice] = value
 
     @property
     def size(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 2:4]
+        self._batch._dirty.add("size")
+        return self._batch._cols["size"][self._slice]
 
     @size.setter
     def size(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 2:4] = value
+        self._batch._dirty.add("size")
+        self._batch._cols["size"][self._slice] = value
 
     @property
     def color(self) -> np.ndarray:
         self._check_alive()
-        return self._batch.data[self._slice, 5:9]
+        self._batch._dirty.add("color")
+        return self._batch._cols["color"][self._slice]
 
     @color.setter
     def color(self, value) -> None:
         self._check_alive()
-        self._batch.data[self._slice, 5:9] = value
+        self._batch._dirty.add("color")
+        self._batch._cols["color"][self._slice] = value

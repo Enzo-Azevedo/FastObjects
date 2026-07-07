@@ -27,31 +27,31 @@ def test_spawn_returns_group(ctx):
     assert len(g) == 10
 
 
-def test_group_views_write_to_batch_data(ctx):
+def test_group_views_write_to_batch_columns(ctx):
     batch = make_batch(ctx)
     g = batch.spawn(10, x=1.0, y=2.0)
     g.y += 100.0  # in-place na view: zero cópia
-    assert batch.data[0, 1] == 102.0
+    assert batch.pos[0, 1] == 102.0
 
 
 def test_group_assignment_broadcasts(ctx):
     batch = make_batch(ctx)
     g = batch.spawn(5)
     g.x = 7.0
-    np.testing.assert_allclose(batch.data[:5, 0], 7.0)
+    np.testing.assert_allclose(batch.pos[:5, 0], 7.0)
     g.color = (0.0, 1.0, 0.0, 1.0)
-    np.testing.assert_allclose(batch.data[:5, 5:9], [[0.0, 1.0, 0.0, 1.0]] * 5)
+    np.testing.assert_allclose(batch.color[:5], [[0.0, 1.0, 0.0, 1.0]] * 5)
 
 
 def test_scalar_columns_and_size(ctx):
     batch = make_batch(ctx)
     g = batch.spawn(4)
     g.rot = 0.5
-    np.testing.assert_allclose(batch.data[:4, 4], 0.5)
+    np.testing.assert_allclose(batch.rot[:4], 0.5)
     g.w = 10.0
     g.h = 20.0
-    np.testing.assert_allclose(batch.data[:4, 2], 10.0)
-    np.testing.assert_allclose(batch.data[:4, 3], 20.0)
+    np.testing.assert_allclose(batch.size[:4, 0], 10.0)
+    np.testing.assert_allclose(batch.size[:4, 1], 20.0)
     np.testing.assert_allclose(g.size, [[10.0, 20.0]] * 4)
     np.testing.assert_allclose(g.pos[:, 0], g.x)
 
@@ -64,8 +64,8 @@ def test_subslice_offsets_into_batch(ctx):
     assert len(sub) == 5
     assert sub.slice == slice(5, 10)
     sub.x = 9.0
-    np.testing.assert_allclose(batch.data[5:10, 0], 9.0)
-    assert batch.data[4, 0] == 0.0  # vizinho intacto
+    np.testing.assert_allclose(batch.pos[5:10, 0], 9.0)
+    assert batch.pos[4, 0] == 0.0  # vizinho intacto
 
 
 def test_subslice_of_second_group_is_absolute(ctx):

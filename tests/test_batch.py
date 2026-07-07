@@ -79,12 +79,12 @@ def test_clear_resets_count(gl):
     batch.spawn(10)  # não deve levantar
 
 
-def test_views_write_through_to_data(gl):
+def test_views_write_through_to_columns(gl):
     ctx, _ = gl
     batch = SpriteBatch(BUNNY, capacity=10, ctx=ctx, view_size=(64, 64))
-    batch.spawn(3)
+    g = batch.spawn(3)
     batch.pos[:3, 1] += 100.0
-    assert batch.data[0, 1] == 100.0  # view escreve no array base
+    assert g.y[0] == 100.0  # batch e grupo compartilham a mesma coluna
 
 
 def test_draw_renders_pixels(gl):

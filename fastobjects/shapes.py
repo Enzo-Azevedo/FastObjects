@@ -7,11 +7,10 @@ import numpy as np
 
 from fastobjects import _context
 from fastobjects._batchcore import BatchCore
+from fastobjects.core.renderer import COLUMN_ATTRS, COLUMN_BYTES, COLUMN_FORMATS
 from fastobjects.core.shaders import SHAPE_FS, SHAPE_VS
 from fastobjects.group import SpriteGroup
 
-SHAPE_FLOATS = 10  # x, y, w, h, rot, r, g, b, a, kind
-SHAPE_STRIDE = SHAPE_FLOATS * 4
 KIND_RECT = 0.0
 KIND_CIRCLE = 1.0
 
@@ -19,11 +18,16 @@ KIND_CIRCLE = 1.0
 class _ShapeRenderer:
     """Desenha até `capacity` formas com um único draw call instanciado.
 
+    Um VBO por atributo (SoA): `pos` sobe em todo render; as demais colunas,
+    apenas quando presentes em `dirty`.
+
     Args:
         ctx: contexto moderngl ativo.
         capacity: número máximo de instâncias.
         view_size: (largura, altura) do alvo de render, em pixels.
     """
+
+    COLUMNS = ("pos", "size", "rot", "color", "kind")
 
     def __init__(
         self,
@@ -33,38 +37,40 @@ class _ShapeRenderer:
     ) -> None:
         self.ctx = ctx
         self.capacity = capacity
+        self.uploads = 0  # total de buffer.write feitos (exposto para testes)
         self.prog = ctx.program(vertex_shader=SHAPE_VS, fragment_shader=SHAPE_FS)
         self.prog["u_view"].value = (2.0 / view_size[0], -2.0 / view_size[1])
-        self.buffer = ctx.buffer(reserve=capacity * SHAPE_STRIDE)
+        self.buffers = {
+            name: ctx.buffer(reserve=capacity * COLUMN_BYTES[name])
+            for name in self.COLUMNS
+        }
         self.vao = ctx.vertex_array(
             self.prog,
             [
-                (
-                    self.buffer,
-                    "2f 2f 1f 4f 1f/i",
-                    "in_pos",
-                    "in_size",
-                    "in_rot",
-                    "in_color",
-                    "in_kind",
-                )
+                (self.buffers[name], COLUMN_FORMATS[name], COLUMN_ATTRS[name])
+                for name in self.COLUMNS
             ],
         )
 
-    def render(self, data: np.ndarray, count: int) -> None:
-        """Sobe `data[:count]` e desenha `count` instâncias (estratégia A do lab)."""
+    def _upload(self, cols: dict[str, np.ndarray], count: int, dirty: set[str]) -> None:
+        for name in self.COLUMNS:
+            self.buffers[name].write(cols[name][:count])
+            self.uploads += 1
+
+    def render(self, cols: dict[str, np.ndarray], count: int, dirty: set[str]) -> None:
+        """Sobe `pos` (+ colunas sujas) e desenha `count` instâncias."""
         if count == 0:
             return
-        self.buffer.write(data[:count])
+        self._upload(cols, count, dirty)
         self.vao.render(moderngl.TRIANGLE_STRIP, vertices=4, instances=count)
 
 
 class ShapeBatch(BatchCore):
     """Lote de primitivas 2D (retângulo, círculo, linha) em um draw call.
 
-    O estado vive em `data` (capacity, 10): x, y, w, h, rot, r, g, b, a, kind.
+    O estado vive em colunas SoA (`pos`, `size`, `rot`, `color`, `kind`).
     Formas diferentes convivem no mesmo lote; os métodos retornam SpriteGroup
-    com views que escrevem direto no array.
+    com views que escrevem direto nas colunas.
 
     Args:
         capacity: número máximo de formas do lote.
@@ -80,7 +86,7 @@ class ShapeBatch(BatchCore):
         ctx: moderngl.Context | None = None,
         view_size: tuple[int, int] | None = None,
     ) -> None:
-        super().__init__(capacity, SHAPE_FLOATS, "formas")
+        super().__init__(capacity, "formas", kind=True)
         ctx, view_size = _context.resolve(ctx, view_size)
         self._renderer = _ShapeRenderer(ctx, capacity, view_size)
 
@@ -96,14 +102,14 @@ class ShapeBatch(BatchCore):
     ) -> SpriteGroup:
         """Adiciona n retângulos. Aceita escalares ou arrays de tamanho n."""
         s = self._alloc(n, "rects")
-        d = self.data
-        d[s, 0] = x
-        d[s, 1] = y
-        d[s, 2] = w
-        d[s, 3] = h
-        d[s, 4] = rot
-        d[s, 5:9] = color
-        d[s, 9] = KIND_RECT
+        cols = self._cols
+        cols["pos"][s, 0] = x
+        cols["pos"][s, 1] = y
+        cols["size"][s, 0] = w
+        cols["size"][s, 1] = h
+        cols["rot"][s] = rot
+        cols["color"][s] = color
+        cols["kind"][s] = KIND_RECT
         return self._make_group(s)
 
     def circles(
@@ -116,15 +122,15 @@ class ShapeBatch(BatchCore):
     ) -> SpriteGroup:
         """Adiciona n círculos; o layout guarda o bounding box (w = h = 2*radius)."""
         s = self._alloc(n, "circles")
-        d = self.data
+        cols = self._cols
         diameter = np.multiply(radius, 2.0, dtype="f4")
-        d[s, 0] = x
-        d[s, 1] = y
-        d[s, 2] = diameter
-        d[s, 3] = diameter
-        d[s, 4] = 0.0
-        d[s, 5:9] = color
-        d[s, 9] = KIND_CIRCLE
+        cols["pos"][s, 0] = x
+        cols["pos"][s, 1] = y
+        cols["size"][s, 0] = diameter
+        cols["size"][s, 1] = diameter
+        cols["rot"][s] = 0.0
+        cols["color"][s] = color
+        cols["kind"][s] = KIND_CIRCLE
         return self._make_group(s)
 
     def lines(
@@ -149,12 +155,12 @@ class ShapeBatch(BatchCore):
         y2 = np.asarray(y2, dtype="f4")
         dx = x2 - x1
         dy = y2 - y1
-        d = self.data
-        d[s, 0] = (x1 + x2) * 0.5
-        d[s, 1] = (y1 + y2) * 0.5
-        d[s, 2] = np.hypot(dx, dy)
-        d[s, 3] = width
-        d[s, 4] = np.arctan2(dy, dx)
-        d[s, 5:9] = color
-        d[s, 9] = KIND_RECT
+        cols = self._cols
+        cols["pos"][s, 0] = (x1 + x2) * 0.5
+        cols["pos"][s, 1] = (y1 + y2) * 0.5
+        cols["size"][s, 0] = np.hypot(dx, dy)
+        cols["size"][s, 1] = width
+        cols["rot"][s] = np.arctan2(dy, dx)
+        cols["color"][s] = color
+        cols["kind"][s] = KIND_RECT
         return self._make_group(s)

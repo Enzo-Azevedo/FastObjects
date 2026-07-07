@@ -61,3 +61,16 @@ excede em muito a diferença entre estratégias — não há vencedora
 reprodutível. Mantém-se a implementação atual (mais simples, sem
 orphan/double-buffer) por não haver ganho demonstrado. Perdedoras
 documentadas acima — não retestar sem mudança de hardware ou de driver.
+
+## Arena 2026-07-06
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Sprites @ 60fps | avg ms (último trial ok) | p99 ms |
+|---|---|---|---|
+| fastobjects | 218,809 | 12.923 | 17.084 |
+| arcade | 5,692 | 12.66 | 17.447 |
+| raylib | 5,692 | 13.87 | 21.014 |
+| pyglet | 3,795 | 12.789 | 17.752 |
+| pygame-ce | 1,687 | 8.287 | 16.372 |

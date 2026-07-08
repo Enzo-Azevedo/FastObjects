@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastobjects"
-version = "0.2.0"
+version = "0.3.0"
 description = "The fastest 2D object rendering library for Python"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,3 +34,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+

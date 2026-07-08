@@ -10,7 +10,7 @@ from fastobjects.layer import SurfaceLayer
 from fastobjects.shapes import ShapeBatch
 from fastobjects.window import Window
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     "CapacityError",
     "ExternalWindow",
@@ -30,3 +30,4 @@ for _name in dir(_glfw):
         globals()[_name] = getattr(_glfw, _name)
         __all__.append(_name)
 del _glfw, _name
+

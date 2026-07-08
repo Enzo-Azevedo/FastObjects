@@ -2,7 +2,7 @@
 
 The fastest 2D object rendering library for Python.
 
-[**Documentation**](https://enzo-azevedo.github.io/FastObjects/) · [Documentação em português](README.pt-BR.md)
+[**Documentation**](https://enzo-azevedo.github.io/FastObjects/) · [Documentação em português](https://enzo-azevedo.github.io/FastObjects/pt/)
 
 Sprites sustained at 60 fps in the bunnymark arena, measured on the same
 machine (AMD Radeon RX 580, Python 3.13, 2026-07-07) against other Python
@@ -17,7 +17,7 @@ rendering libraries:
 | pyglet | 2,530 |
 
 That is **86x** the closest competitor. Numbers vary between runs by one ramp
-step (±1.5x); see [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for the
+step (±1.5x); see [`benchmarks/RESULTS.md`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/benchmarks/RESULTS.md) for the
 full dated series, methodology, and hardware details before quoting a number
 as "current".
 
@@ -70,7 +70,7 @@ win.run()
 ## Why it's fast
 
 Three decisions, each validated by benchmark (every experiment — winners and
-losers — is recorded in [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md)):
+losers — is recorded in [`benchmarks/RESULTS.md`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/benchmarks/RESULTS.md)):
 
 1. **No Python objects per sprite.** State lives in flat NumPy columns
    (structure-of-arrays); updates are vectorized array math, never a
@@ -116,18 +116,15 @@ while True:
     hud.draw()
     pygame.display.flip()
 ```
-
-See [`examples/pygame_interop.py`](examples/pygame_interop.py) for the
-complete, runnable version (click to spawn, D to despawn, pygame-font HUD).
-
 ## Examples
 
-- [`examples/bunnymark.py`](examples/bunnymark.py) — 100k bouncing bunnies,
+- [`examples/pygame_interop.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/pygame_interop.py) for the
+complete, runnable version (click to spawn, D to despawn, pygame-font HUD).
+
+- [`examples/bunnymark.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/bunnymark.py) — 100k bouncing bunnies,
   native window, FPS counter.
-- [`examples/shapes_input.py`](examples/shapes_input.py) — shapes + polled
+- [`examples/shapes_input.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/shapes_input.py) — shapes + polled
   keyboard/mouse input.
-- [`examples/pygame_interop.py`](examples/pygame_interop.py) — FastObjects
-  rendering inside a pygame window.
 
 ## Development
 

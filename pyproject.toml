@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+docs = ["mkdocs-material>=9", "mkdocs-static-i18n>=1"]
 bench = [
     "pygame-ce>=2.5",
     "arcade>=3.0",

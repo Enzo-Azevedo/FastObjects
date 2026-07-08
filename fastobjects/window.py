@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import time
-from typing import Callable
+from typing import Callable, Protocol
 
 import glfw
 import moderngl
 
 from fastobjects import _context
 from fastobjects.input import Keyboard, Mouse
+
+
+class Drawable(Protocol):
+    """Qualquer objeto desenhável por Window.draw (batches, layers)."""
+
+    def draw(self) -> None: ...
 
 
 class Window:
@@ -91,7 +97,7 @@ class Window:
         self._update = fn
         return fn
 
-    def draw(self, *batches) -> None:
+    def draw(self, *batches: Drawable) -> None:
         """Desenha cada batch na ordem dada (açúcar para batch.draw())."""
         for batch in batches:
             batch.draw()

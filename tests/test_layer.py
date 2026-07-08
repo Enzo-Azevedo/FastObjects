@@ -50,6 +50,13 @@ def test_surface_layer_update_reflects_new_drawing(gl):
     assert read_pixels(fbo)[32, 32][1] > 200  # círculo apareceu
 
 
+def test_zero_size_surface_raises(gl):
+    ctx, _ = gl
+    surf = pygame.Surface((0, 0), pygame.SRCALPHA)
+    with pytest.raises(ValueError, match="tamanho inválido"):
+        SurfaceLayer(surf, ctx=ctx, view_size=(64, 64))
+
+
 def test_surface_layer_size_change_raises(gl):
     ctx, _ = gl
     surf = pygame.Surface((32, 32), pygame.SRCALPHA)

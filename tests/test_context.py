@@ -46,3 +46,15 @@ def test_resolve_explicit_args_pass_through():
     ctx, view_size = _context.resolve(sentinel, (64, 64))
     assert ctx is sentinel
     assert view_size == (64, 64)
+
+
+def test_resolve_partial_overrides():
+    win = Window(320, 240, "partial", visible=False)
+    ctx, view_size = _context.resolve(None, (10, 20))
+    assert ctx is win.ctx
+    assert view_size == (10, 20)
+    sentinel = object()
+    ctx2, view_size2 = _context.resolve(sentinel, None)
+    assert ctx2 is sentinel
+    assert view_size2 == (320, 240)
+    win.close()

@@ -57,20 +57,31 @@ def gpu_name() -> str:
         return "desconhecida"
 
 
+def make_heading(stamp: str, label: str) -> str:
+    """Heading datado do RESULTS.md; o rótulo distingue runs do mesmo dia."""
+    return f"## Arena {stamp} ({label})" if label else f"## Arena {stamp}"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--save", action="store_true", help="anexa em benchmarks/RESULTS.md")
+    parser.add_argument("--label", default="", help="rótulo anexado ao heading do RESULTS.md")
     args = parser.parse_args()
 
     results = []
     for bench in BENCHES:
         print(f"== rodando {bench} ==", flush=True)
-        proc = subprocess.run(
-            [sys.executable, str(ARENA / bench)],
-            capture_output=True,
-            text=True,
-            cwd=str(ARENA),
-        )
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(ARENA / bench)],
+                capture_output=True,
+                text=True,
+                cwd=str(ARENA),
+                timeout=600,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"TIMEOUT: {bench}", file=sys.stderr)
+            continue
         if proc.returncode != 0:
             print(f"FALHOU ({proc.returncode}):\n{proc.stderr}", file=sys.stderr)
             continue
@@ -82,7 +93,7 @@ def main() -> None:
     if args.save:
         stamp = datetime.date.today().isoformat()
         header = (
-            f"\n## Arena {stamp}\n\n"
+            f"\n{make_heading(stamp, args.label)}\n\n"
             f"- Hardware: {platform.processor()} | GPU: {gpu_name()}\n"
             f"- Python {platform.python_version()} | {platform.system()} {platform.release()}\n\n"
         )

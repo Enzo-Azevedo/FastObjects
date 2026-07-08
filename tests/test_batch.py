@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import moderngl
 import numpy as np
 import pytest
@@ -5,7 +7,7 @@ import pytest
 from fastobjects.batch import SpriteBatch
 from fastobjects.errors import CapacityError
 
-BUNNY = "benchmarks/arena/assets/bunny.png"
+BUNNY = str(Path(__file__).resolve().parent.parent / "benchmarks" / "arena" / "assets" / "bunny.png")
 
 
 @pytest.fixture(scope="module")

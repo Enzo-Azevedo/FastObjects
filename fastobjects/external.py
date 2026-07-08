@@ -41,6 +41,10 @@ def attach(view_size: tuple[int, int]) -> ExternalWindow:
     externa vira a "atual": batches criados sem ctx explícito passam a
     usá-la, como no modo nativo.
 
+    Chame UMA vez por janela do host: attaches repetidos criam wrappers
+    moderngl independentes sobre o mesmo contexto GL e podem dessincronizar
+    o estado entre eles.
+
     Args:
         view_size: (largura, altura) da área de render do host, em pixels.
 

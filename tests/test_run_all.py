@@ -3,7 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "benchmarks" / "arena"))
 
-from run_all import format_table, parse_bench_output  # noqa: E402
+from run_all import format_table, make_heading, parse_bench_output  # noqa: E402
+
+
+def test_make_heading_with_and_without_label():
+    assert make_heading("2026-07-08", "") == "## Arena 2026-07-08"
+    assert make_heading("2026-07-08", "pós-X") == "## Arena 2026-07-08 (pós-X)"
 
 
 def test_parse_bench_output_takes_last_json_line():

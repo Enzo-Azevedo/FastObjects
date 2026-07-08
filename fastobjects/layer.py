@@ -34,6 +34,11 @@ class SurfaceLayer:
         ctx, view_size = _context.resolve(ctx, view_size)
         self._surface = surface
         w, h = surface.get_size()
+        if w <= 0 or h <= 0:
+            raise ValueError(
+                f"Surface de tamanho inválido {surface.get_size()} — use uma "
+                "surface com largura e altura > 0."
+            )
         self._size = (int(w), int(h))
         self._texture = ctx.texture(self._size, 4)
         self._renderer = SpriteRenderer(ctx, self._texture, 1, view_size)

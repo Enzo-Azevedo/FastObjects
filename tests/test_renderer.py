@@ -56,6 +56,18 @@ def test_render_zero_count_is_noop(gl):
     assert px[:, :, 0].max() < 10  # nada desenhado
 
 
+def test_sprite_rotation_quarter_turn(gl):
+    ctx, fbo = gl
+    fbo.clear(0.0, 0.0, 0.0, 1.0)
+    renderer = SpriteRenderer(ctx, white_texture(ctx), capacity=16, view_size=(64, 64))
+    # sprite alto e fino (4x20) rotacionado 90°: a pegada vira horizontal
+    cols = make_sprite_cols(32, 32, 4, 20, np.pi / 2, (1.0, 0.0, 0.0, 1.0))
+    renderer.render(cols, 1, {"size", "rot", "color"})
+    px = read_pixels(fbo)
+    assert px[32, 24][0] > 200  # 8px à esquerda do centro: dentro dos 20 de largura
+    assert px[24, 32][0] < 10  # 8px acima do centro: fora dos 4 de altura
+
+
 def test_sprite_y_axis_points_down(gl):
     ctx, fbo = gl
     fbo.clear(0.0, 0.0, 0.0, 1.0)

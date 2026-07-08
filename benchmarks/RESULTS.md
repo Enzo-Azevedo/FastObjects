@@ -1,4 +1,4 @@
-# Resultados de benchmarks
+﻿# Resultados de benchmarks
 
 Registro histórico de toda medição do projeto. Nenhuma decisão de performance
 existe sem uma entrada aqui. Formato: seções datadas, hardware explícito.
@@ -141,3 +141,43 @@ documentadas acima — não retestar sem mudança de hardware ou de driver.
   que economiza de upload. Perdedora documentada; nao retestar sem mudanca de
   hardware/driver ou conversao vetorizada mais barata.
 - orphan REJEITADO de novo (empate, consistente com o lab da Fase 1-3).
+
+## Arena 2026-07-07 (pós-SoA)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Sprites @ 60fps | avg ms (último trial ok) | p99 ms |
+|---|---|---|---|
+| fastobjects | 328,213 | 12.461 | 22.177 |
+| arcade | 3,795 | 10.266 | 19.433 |
+| raylib | 3,795 | 10.095 | 19.642 |
+| pygame-ce | 2,530 | 11.563 | 20.813 |
+| pyglet | 2,530 | 10.323 | 17.24 |
+
+
+## Aceite SoA 2026-07-07: benchmark_2d vs teto do moderngl cru (pos-otimizacao)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Mesmo run, mesmas condicoes (a maquina estava mais lenta que no baseline em
+  termos absolutos; a razao fastobjects/teto e a metrica de aceite).
+
+| N objetos | moderngl (cru) | fastobjects | % do teto (antes -> depois) |
+|---|---|---|---|
+| 100 | 1777.8 | 1146.7 | 96% -> 65% (overhead fixo; ambos >1100 FPS) |
+| 1.000 | 1083.5 | 1293.1 | 91% -> 119% |
+| 5.000 | 1077.6 | 1294.6 | 79% -> 120% |
+| 10.000 | 1025.0 | 1285.6 | 62% -> 125% |
+| 50.000 | 669.0 | 605.2 | 45% -> 90% |
+| 100.000 | 352.6 | 384.0 | 41% -> 109% |
+
+**Criterio de aceite (>=80% do teto em 100k): SUPERADO - 109%.** O fastobjects
+passou a VENCER o renderer minimo hardcoded em N>=1000: o bench cru paga
+astype+tobytes (2 copias de CPU) por frame, enquanto o render SoA escreve o
+array contiguo direto, e as colunas frias nem sobem. Absoluto em 100k:
+175.7 -> 384.0 FPS (2.2x).
+
+**Arena pos-SoA: 328.213 sprites @ 60fps (era 218.809, +50% = 1 passo de ramp),
+86x o melhor concorrente** - mesmo com a maquina mais lenta nesta rodada
+(concorrentes cairam um passo). Upload de sprites no frame tipico: 36 -> 8
+B/instancia.

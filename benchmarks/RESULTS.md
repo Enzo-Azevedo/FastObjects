@@ -206,3 +206,27 @@ B/instancia.
   leu (255,0,0) corretamente), entao o problema e o draw do FastObjects nao
   produzir saida, nao a medicao. Consertar exigiria patchar internals do
   raylib (fora de escopo). Documentado como nao suportado.
+
+## Multi-imagem 2026-07-09 (N sprites de 8 imagens diferentes)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Sprites @ 60fps | avg ms | p99 ms |
+|---|---|---|---|
+| fastobjects | 328,213 | 11.542 | 12.133 |
+| arcade | 5,692 | 12.276 | 21.123 |
+| pyglet | 3,795 | 15.145 | 20.708 |
+
+## Arena 2026-07-09 (pós-atlas)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Sprites @ 60fps | avg ms (último trial ok) | p99 ms |
+|---|---|---|---|
+| fastobjects | 328,213 | 11.538 | 12.303 |
+| arcade | 5,692 | 12.387 | 18.265 |
+| raylib | 5,692 | 11.997 | 19.304 |
+| pygame-ce | 3,795 | 13.107 | 19.566 |
+| pyglet | 3,795 | 12.931 | 18.787 |

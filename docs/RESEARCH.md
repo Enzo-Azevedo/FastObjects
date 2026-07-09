@@ -66,3 +66,61 @@ moderngl 5.12 (`moderngl/__init__.py`):
   zero bytecode Python por sprite.
 - H2: a estratégia de upload (write total vs. orphan vs. parcial) importa em
   N alto — decidir no lab (Task 13).
+
+## Texture atlas: como arcade e pyglet fazem (e por que o nosso é estático)
+
+**Data:** 2026-07-09 | **Versões:** arcade 3.3.3, pyglet 2.1.15
+
+Todos os três resolvem o mesmo problema — muitas imagens, um `bind` de textura,
+um draw call — empacotando sub-imagens numa textura grande com UVs por imagem.
+As diferenças estão no ciclo de vida.
+
+### pyglet (`pyglet/image/atlas.py`)
+
+- `Allocator` de **prateleiras** (`_Strip`): coloca retângulos em faixas
+  horizontais; melhor quando as imagens têm alturas parecidas ou entram em
+  ordem decrescente de altura (`Allocator.alloc`, linha ~90). É o mesmo
+  algoritmo do nosso `Atlas` (shelf packing).
+- `TextureAtlas.add(img, border=0)`: aloca, faz `blit_into` e retorna uma
+  `TextureRegion` (as UVs). O `border` é blank (deixa pixels em branco em volta),
+  não extrusão — a docstring assume que o chamador cuida do bleeding.
+- `TextureBin`: quando um atlas enche (`AllocatorException`), **cria um novo
+  atlas** em vez de crescer o existente. Ou seja: **dinâmico por multiplicação
+  de atlas** — pode passar a ter vários binds se as imagens não couberem num só.
+- Imagens **não podem ser removidas** de um atlas depois de adicionadas (a
+  própria docstring diz isso).
+
+### arcade (`arcade/texture_atlas/atlas_default.py`)
+
+- Também usa um `Allocator` de prateleiras, mas o atlas é **dinâmico e cresce**:
+  `add()` (linha 268) tenta alocar; em `AllocatorException` chama `resize()`
+  (linha 652) — **dobra o tamanho da textura e recopia tudo** — ou `rebuild()`
+  (linha 744) quando há buracos de texturas coletadas. Mantém ref-counting das
+  regiões (`ref_counters.py`) para reaproveitar espaço.
+- `border` (default **2px**) com **extrusão de verdade**: copia as tiras de 1px
+  de cada borda da imagem para o padding (linha ~499-520), exatamente a técnica
+  que adotamos (via `np.pad(mode="edge")`) para evitar bleeding sob filtragem
+  linear.
+- UVs guardadas por região (`region.py`/`uv_data.py`) e enviadas à GPU num
+  buffer de textura, para o shader olhar por `texture_id`.
+
+### FastObjects: atlas estático
+
+Nosso `fastobjects/atlas.py` usa o **mesmo shelf packing** do pyglet/arcade e a
+**mesma extrusão de borda** do arcade, mas é **estático**: montado uma vez, a
+partir da lista fixa de imagens passada ao `SpriteBatch`, sem alocador dinâmico,
+sem `resize`/`rebuild` e sem ref-counting.
+
+- **Por que basta:** o caso de uso do FastObjects é arte conhecida na criação do
+  batch (um spritesheet, o conjunto de sprites de um jogo). Nesse cenário, todo
+  o custo de um alocador dinâmico — recopiar a textura em cada `resize`,
+  fragmentação, contagem de referências — é overhead sem retorno.
+- **Trade-off aceito:** não dá para adicionar imagens em runtime (fase futura, se
+  houver demanda medida). Em troca: código muito menor, determinístico e
+  testável **sem contexto GL** (a lógica de packing/UV é NumPy puro — ver
+  `tests/test_atlas.py`), e zero custo de realocação.
+- **UVs por instância, não por texture_id:** em vez de um buffer de texture-id
+  consultado no shader (arcade), guardamos o retângulo `(u0,v0,u1,v1)` como uma
+  coluna fria do SoA e o vertex shader faz `mix(uv0, uv1, corner)`. Assim a
+  seleção de imagem entra de graça no dirty tracking existente (sobe só quando
+  muda) e a animação de spritesheet é só `group.image = frame`.

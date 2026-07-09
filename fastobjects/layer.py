@@ -47,8 +47,9 @@ class SurfaceLayer:
             "size": np.array([[float(w), float(h)]], dtype="f4"),
             "rot": np.zeros(1, dtype="f4"),
             "color": np.ones((1, 4), dtype="f4"),
+            "uv": np.array([[0.0, 0.0, 1.0, 1.0]], dtype="f4"),
         }
-        self._dirty = {"size", "rot", "color"}  # 1º draw sobe tudo; depois só pos
+        self._dirty = {"size", "rot", "color", "uv"}  # 1º draw sobe tudo; depois só pos
 
     def update(self) -> None:
         """Sobe o conteúdo atual da surface para a GPU (1 upload).

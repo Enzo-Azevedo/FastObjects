@@ -29,7 +29,7 @@ def test_first_draw_uploads_everything(gl):
     batch = make_batch(ctx)
     batch.spawn(10)
     batch.draw()
-    assert batch._renderer.uploads == 4  # pos + size + rot + color
+    assert batch._renderer.uploads == 5  # pos + size + rot + color + uv
 
 
 def test_untouched_frame_uploads_only_pos(gl):
@@ -79,18 +79,18 @@ def test_spawn_despawn_clear_mark_all(gl):
 
     batch.spawn(5)  # spawn marca tudo
     batch.draw()
-    assert batch._renderer.uploads == base + 4
+    assert batch._renderer.uploads == base + 5  # pos + size + rot + color + uv
     base = batch._renderer.uploads
 
     batch.despawn(a)  # despawn desloca dados por baixo: marca tudo
     batch.draw()
-    assert batch._renderer.uploads == base + 4
+    assert batch._renderer.uploads == base + 5
     base = batch._renderer.uploads
 
     batch.clear()  # clear marca tudo (com count 0 o draw não sobe nada)
     batch.spawn(3)
     batch.draw()
-    assert batch._renderer.uploads == base + 4
+    assert batch._renderer.uploads == base + 5
 
 
 def test_batch_level_properties_mark_dirty(gl):

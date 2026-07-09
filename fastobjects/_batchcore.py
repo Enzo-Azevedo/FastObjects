@@ -28,9 +28,12 @@ class BatchCore:
         capacity: número máximo de linhas do lote.
         unit: nome plural dos objetos nas mensagens de erro ("sprites"/"formas").
         kind: se True, adiciona a coluna `kind` (usada pelo ShapeBatch).
+        uv: se True, adiciona a coluna `uv` (usada pelo SpriteBatch/atlas).
     """
 
-    def __init__(self, capacity: int, unit: str, *, kind: bool = False) -> None:
+    def __init__(
+        self, capacity: int, unit: str, *, kind: bool = False, uv: bool = False
+    ) -> None:
         if capacity <= 0:
             raise ValueError(
                 f"capacity={capacity} inválida: use um valor > 0 "
@@ -46,6 +49,8 @@ class BatchCore:
         }
         if kind:
             self._cols["kind"] = np.zeros(capacity, dtype="f4")
+        if uv:
+            self._cols["uv"] = np.zeros((capacity, 4), dtype="f4")
         self._dirty: set[str] = set()
         self._groups: weakref.WeakSet[SpriteGroup] = weakref.WeakSet()
 

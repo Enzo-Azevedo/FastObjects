@@ -157,3 +157,22 @@ class SpriteGroup:
         self._check_alive()
         self._batch._dirty.add("color")
         self._batch._cols["color"][self._slice] = value
+
+    # --- imagem (atlas) ----------------------------------------------------
+
+    @property
+    def image(self):
+        raise AttributeError(
+            "image é write-only — atribua um índice/nome (group.image = i)."
+        )
+
+    @image.setter
+    def image(self, value) -> None:
+        self._check_alive()
+        setter = getattr(self._batch, "set_group_image", None)
+        if setter is None:
+            raise AttributeError(
+                "este grupo não tem imagem — image só existe em SpriteBatch "
+                "(um ShapeBatch não tem atlas)."
+            )
+        setter(self._slice, value)

@@ -8,6 +8,7 @@ in vec2 in_pos;    // centro do sprite, em pixels (por instância)
 in vec2 in_size;   // largura/altura em pixels (por instância)
 in float in_rot;   // radianos (por instância)
 in vec4 in_color;  // multiplicador RGBA (por instância)
+in vec4 in_uv;     // sub-retângulo no atlas: (u0, v0, u1, v1) (por instância)
 
 out vec4 v_color;
 out vec2 v_uv;
@@ -23,7 +24,8 @@ void main() {
     vec2 world = in_pos + vec2(corner.x * c - corner.y * s,
                                corner.x * s + corner.y * c);
     gl_Position = vec4(world * u_view + vec2(-1.0, 1.0), 0.0, 1.0);
-    v_uv = CORNERS[gl_VertexID] + 0.5;
+    vec2 c_uv = CORNERS[gl_VertexID] + 0.5;
+    v_uv = mix(in_uv.xy, in_uv.zw, c_uv);
     v_color = in_color;
 }
 """

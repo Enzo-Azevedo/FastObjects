@@ -10,13 +10,14 @@ from fastobjects.core.shaders import SPRITE_FS, SPRITE_VS
 # Layout SoA decidido por benchmark (Lab 2026-07-07, RESULTS.md): tudo f4;
 # quantização de colunas frias foi medida e REJEITADA (conversão na CPU custa
 # mais do que economiza de upload).
-COLUMN_BYTES = {"pos": 8, "size": 8, "rot": 4, "color": 16, "kind": 4}
+COLUMN_BYTES = {"pos": 8, "size": 8, "rot": 4, "color": 16, "kind": 4, "uv": 16}
 COLUMN_FORMATS = {
     "pos": "2f/i",
     "size": "2f/i",
     "rot": "1f/i",
     "color": "4f/i",
     "kind": "1f/i",
+    "uv": "4f/i",
 }
 COLUMN_ATTRS = {
     "pos": "in_pos",
@@ -24,6 +25,7 @@ COLUMN_ATTRS = {
     "rot": "in_rot",
     "color": "in_color",
     "kind": "in_kind",
+    "uv": "in_uv",
 }
 
 
@@ -41,7 +43,7 @@ class SpriteRenderer:
         view_size: (largura, altura) do alvo de render, em pixels.
     """
 
-    COLUMNS = ("pos", "size", "rot", "color")
+    COLUMNS = ("pos", "size", "rot", "color", "uv")
 
     def __init__(
         self,

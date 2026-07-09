@@ -181,3 +181,28 @@ array contiguo direto, e as colunas frias nem sobem. Absoluto em 100k:
 86x o melhor concorrente** - mesmo com a maquina mais lenta nesta rodada
 (concorrentes cairam um passo). Upload de sprites no frame tipico: 36 -> 8
 B/instancia.
+
+## Spike hosts 2026-07-09: pyglet / arcade / raylib (benchmarks/lab/spike_hosts.py)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Metodo: por host (subprocesso proprio), cria a janela com GL, fo.attach,
+  desenha um retangulo vermelho no centro e le o pixel central via
+  ctx.screen.read. verde = attach cru basta; amarelo = so com save/restore de
+  estado GL; vermelho = nao renderiza / attach falha.
+
+| Host | Veredito | Rota | Nota |
+|---|---|---|---|
+| pyglet 2.1.15 | **verde** | `fo.attach` cru | pixel (255,0,0); OpenGL nativo, zero intervencao |
+| arcade 3.3.3 | **verde** | `fo.attach` cru | pixel (255,0,0); attach por cima do contexto do arcade funciona direto |
+| raylib 6.0.1.0 | **vermelho** | nao suportado | clear funciona (attach conecta), mas o draw instanciado nao aparece (pixel = cor do clear) dentro e fora de begin/end, com flush do batch e depth off |
+
+**Conclusoes:**
+- pyglet e arcade: suportados com `fo.attach` cru, sem isolamento de estado.
+  Nenhum host ficou "amarelo" -> `ExternalWindow.isolated()` NAO e necessario
+  nesta fase (Task 2 do plano pulado por evidencia).
+- raylib NAO suportado: o rlgl mantem o proprio estado GL (matrizes, shader,
+  VAO, sistema de batch) e um segundo pipeline moderngl no mesmo contexto nao
+  renderiza. A leitura de pixel foi validada (um retangulo NATIVO do raylib
+  leu (255,0,0) corretamente), entao o problema e o draw do FastObjects nao
+  produzir saida, nao a medicao. Consertar exigiria patchar internals do
+  raylib (fora de escopo). Documentado como nao suportado.

@@ -107,3 +107,71 @@ The full runnable version is
     included). So the composition goes the other way: pygame draws onto a
     Surface and FastObjects composites it. You keep every pygame drawing
     tool; you just present through OpenGL.
+
+## Other hosts
+
+`fo.attach()` works with *any* current OpenGL context, so pygame is just the
+documented example. These hosts were each validated with a real window (the
+[spike](https://github.com/Enzo-Azevedo/FastObjects/blob/main/benchmarks/lab/spike_hosts.py)
+is in the repo, results in `benchmarks/RESULTS.md`):
+
+| Host | Status |
+|---|---|
+| pygame (OpenGL) | ✅ Supported |
+| pyglet | ✅ Supported |
+| arcade | ✅ Supported |
+| raylib (pyray) | ❌ Not supported |
+
+**pyglet** — a pyglet window is already OpenGL, so `attach` just works:
+
+```python
+import pyglet
+import fastobjects as fo
+
+win = pyglet.window.Window(900, 600)
+ext = fo.attach(view_size=(900, 600))
+batch = fo.SpriteBatch("player.png", capacity=10_000)
+batch.spawn(1000, x=450, y=300)
+
+while not win.has_exit:
+    win.switch_to()
+    win.dispatch_events()
+    ext.clear(0.1, 0.1, 0.1)
+    batch.draw()      # FastObjects objects
+    win.flip()
+```
+
+See [`examples/pyglet_interop.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/pyglet_interop.py)
+(bouncing bunnies + a native `pyglet.text.Label` HUD).
+
+**arcade** — draw the FastObjects batches inside `on_draw`; native arcade
+drawing (`arcade.Text`, shapes) composites alongside them:
+
+```python
+import arcade
+import fastobjects as fo
+
+class Demo(arcade.Window):
+    def __init__(self):
+        super().__init__(900, 600, "fastobjects + arcade")
+        self.ext = fo.attach(view_size=(900, 600))
+        self.batch = fo.SpriteBatch("player.png", capacity=10_000)
+        self.batch.spawn(1000, x=450, y=300)
+
+    def on_draw(self):
+        self.clear()
+        self.batch.draw()   # FastObjects objects
+
+Demo()
+arcade.run()
+```
+
+See [`examples/arcade_interop.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/arcade_interop.py).
+
+!!! warning "raylib is not supported"
+    `attach` connects to raylib's GL context (a `clear` works), but the
+    FastObjects instanced draw produces no output: raylib's `rlgl` layer owns
+    the GL state (its own matrix stack, shader, VAO, and batch system), and a
+    second rendering pipeline sharing the same context does not render.
+    Reconciling the two would require patching raylib internals, which is out
+    of scope. Use pygame, pyglet, or arcade as the host instead.

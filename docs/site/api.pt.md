@@ -33,17 +33,19 @@ Usar `run`/`swap`/`request_close`/`should_close` após `close()` levanta
 ## `SpriteBatch`
 
 ```python
-SpriteBatch(texture_path, capacity, *, ctx=None, view_size=None)
+SpriteBatch(images, capacity, *, ctx=None, view_size=None)
 ```
 
 Pool de capacidade fixa de sprites texturizados desenhado em uma chamada
-instanciada. `ctx`/`view_size` usam a janela atual por padrão. Levanta
-`ValueError` se `capacity <= 0`, `FileNotFoundError` (com o caminho
-resolvido) se a textura não existe.
+instanciada. `images` é um caminho (`str`), uma lista de caminhos (por índice)
+ou um `dict` nome→caminho (por nome) — empacotados num texture atlas na
+criação. `ctx`/`view_size` usam a janela atual por padrão. Levanta `ValueError`
+se `capacity <= 0`, `FileNotFoundError` (caminho resolvido) para imagem
+inexistente, ou `AtlasOverflowError` se as imagens não couberem numa textura.
 
 | Membro | Descrição |
 |---|---|
-| `spawn(n, x=0, y=0, w=None, h=None, rot=0, color=(1,1,1,1))` | Cria `n` sprites, retorna um `SpriteGroup`. Cada arg é escalar ou array de tamanho `n`; `w`/`h` usam o tamanho da textura por padrão. Levanta `ValueError` (n<0) ou `CapacityError`. |
+| `spawn(n, x=0, y=0, w=None, h=None, rot=0, color=(1,1,1,1), image=0)` | Cria `n` sprites, retorna um `SpriteGroup`. Cada arg é escalar ou array de tamanho `n`; `image` (índice ou nome) escolhe a sub-imagem; `w`/`h` usam o tamanho dela por padrão. Levanta `ValueError` (n<0, image inválido) ou `CapacityError`. |
 | `despawn(group)` | Remove o grupo, compacta o armazenamento, devolve capacity, realoca handles sobreviventes. Levanta `ValueError` (batch alheio) / `RuntimeError` (já removido). |
 | `clear()` | Remove todos os sprites; invalida todos os handles. |
 | `draw()` | Sobe as colunas mudadas + posições, um draw call instanciado. |
@@ -79,6 +81,7 @@ são views NumPy do batch.
 |---|---|
 | `x`, `y`, `w`, `h`, `rot` | Views 1D (comprimento = tamanho do grupo). |
 | `pos` (n,2), `size` (n,2), `color` (n,4) | Views em bloco. |
+| `image` (setter) | `group.image = i` re-textura o grupo para a imagem `i` do atlas (índice ou nome). Só em grupos de sprite; levanta em grupos de forma. |
 | `slice` | Slice absoluto no batch. |
 | `len(grupo)` | Contagem de sprites. |
 | `grupo[a:b]` | Sub-grupo sobre o mesmo armazenamento (passo deve ser 1). |

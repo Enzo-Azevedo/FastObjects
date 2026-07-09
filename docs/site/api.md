@@ -33,17 +33,19 @@ Using `run`/`swap`/`request_close`/`should_close` after `close()` raises
 ## `SpriteBatch`
 
 ```python
-SpriteBatch(texture_path, capacity, *, ctx=None, view_size=None)
+SpriteBatch(images, capacity, *, ctx=None, view_size=None)
 ```
 
-Fixed-capacity pool of textured sprites drawn in one instanced call.
+Fixed-capacity pool of textured sprites drawn in one instanced call. `images`
+is a path (`str`), a list of paths (selected by index), or a `dict` name→path
+(selected by name) — packed into one texture atlas at creation.
 `ctx`/`view_size` default to the current window. Raises `ValueError` if
-`capacity <= 0`, `FileNotFoundError` (with the resolved path) if the texture
-is missing.
+`capacity <= 0`, `FileNotFoundError` (resolved path) for a missing image, or
+`AtlasOverflowError` if the images do not fit one texture.
 
 | Member | Description |
 |---|---|
-| `spawn(n, x=0, y=0, w=None, h=None, rot=0, color=(1,1,1,1))` | Creates `n` sprites, returns a `SpriteGroup`. Each arg is a scalar or length-`n` array; `w`/`h` default to the texture size. Raises `ValueError` (n<0) or `CapacityError`. |
+| `spawn(n, x=0, y=0, w=None, h=None, rot=0, color=(1,1,1,1), image=0)` | Creates `n` sprites, returns a `SpriteGroup`. Each arg is a scalar or length-`n` array; `image` (index or name) picks the sub-image; `w`/`h` default to that image's size. Raises `ValueError` (n<0, bad image) or `CapacityError`. |
 | `despawn(group)` | Removes the group, compacts storage, frees capacity, relocates surviving handles. Raises `ValueError` (foreign batch) / `RuntimeError` (already removed). |
 | `clear()` | Removes all sprites; invalidates all handles. |
 | `draw()` | Uploads changed columns + positions, one instanced draw call. |
@@ -78,6 +80,7 @@ NumPy views into the batch.
 |---|---|
 | `x`, `y`, `w`, `h`, `rot` | 1D views (length = group size). |
 | `pos` (n,2), `size` (n,2), `color` (n,4) | Block views. |
+| `image` (setter) | `group.image = i` re-textures the group to atlas image `i` (index or name). Only on sprite groups; raises on shape groups. |
 | `slice` | Absolute slice in the batch. |
 | `len(group)` | Sprite count. |
 | `group[a:b]` | Sub-group over the same storage (step must be 1). |

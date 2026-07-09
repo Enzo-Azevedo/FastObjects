@@ -88,6 +88,47 @@ sub-grupo que o sobreponha — fica inválido: tocá-lo levanta `RuntimeError`
 mandando fazer spawn de novo. `batch.clear()` remove tudo e invalida todos
 os handles.
 
+## Várias imagens (atlas)
+
+Um batch pode guardar **mais de uma imagem** e ainda desenhar tudo em uma
+chamada. Passe uma lista (selecionada por índice) ou um dict (selecionado por
+nome); o FastObjects empacota tudo num único texture atlas na criação:
+
+```python
+batch = fo.SpriteBatch(["heroi.png", "moeda.png", "inimigo.png"], capacity=10_000)
+
+heroi  = batch.spawn(1, x=400, y=300, image=0)
+moedas = batch.spawn(50, x=xs, y=ys, image=1)        # todas moedas
+misto  = batch.spawn(100, x=xs, y=ys, image=np.arange(100) % 3)  # vetorizado
+
+nomeado = fo.SpriteBatch({"heroi": "heroi.png", "moeda": "moeda.png"}, capacity=100)
+nomeado.spawn(1, image="heroi")
+```
+
+`spawn(..., image=i)` aceita escalar ou array de tamanho `n` (índices/nomes).
+Quando `w`/`h` ficam em `None`, cada sprite usa o tamanho em pixels **da sua
+própria imagem**.
+
+**Animação de spritesheet** — reatribua `group.image` para re-texturar um grupo
+no lugar (ainda um draw call; `image` é uma coluna fria que só re-sobe quando
+você muda):
+
+```python
+frames = fo.SpriteBatch([f"walk{i}.png" for i in range(8)], capacity=100)
+player = frames.spawn(1, x=400, y=300)
+
+@win.frame
+def update(dt):
+    player.image = (tick // 6) % 8   # avança a animação
+    ...
+```
+
+O atlas é **estático**: montado uma vez a partir das imagens passadas. Todas
+precisam caber numa textura (`GL_MAX_TEXTURE_SIZE`, tipicamente ≥ 8192); se não
+couberem, você recebe um `AtlasOverflowError` acionável. Add/remove em runtime
+ainda não é suportado. Veja
+[`examples/atlas_animation.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/atlas_animation.py).
+
 ## Um exemplo completo
 
 ```python

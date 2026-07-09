@@ -87,6 +87,46 @@ overlaps it — becomes invalid: touching it raises a `RuntimeError` telling
 you to spawn again. `batch.clear()` removes everything and invalidates all
 handles.
 
+## Multiple images (atlas)
+
+A batch can hold **more than one image** and still draw everything in one call.
+Pass a list (selected by index) or a dict (selected by name); FastObjects packs
+them into a single texture atlas at creation:
+
+```python
+batch = fo.SpriteBatch(["hero.png", "coin.png", "enemy.png"], capacity=10_000)
+
+hero  = batch.spawn(1, x=400, y=300, image=0)
+coins = batch.spawn(50, x=xs, y=ys, image=1)        # all coins
+mixed = batch.spawn(100, x=xs, y=ys, image=np.arange(100) % 3)  # vectorized
+
+named = fo.SpriteBatch({"hero": "hero.png", "coin": "coin.png"}, capacity=100)
+named.spawn(1, image="hero")
+```
+
+`spawn(..., image=i)` accepts a scalar or a length-`n` array of indices/names.
+When `w`/`h` are left as `None`, each sprite defaults to **its own image's**
+pixel size.
+
+**Spritesheet animation** — reassign `group.image` to re-texture a group in
+place (still one draw call, `image` is a cold column that only re-uploads when
+you change it):
+
+```python
+frames = fo.SpriteBatch([f"walk{i}.png" for i in range(8)], capacity=100)
+player = frames.spawn(1, x=400, y=300)
+
+@win.frame
+def update(dt):
+    player.image = (tick // 6) % 8   # advance the animation
+    ...
+```
+
+The atlas is **static**: built once from the images you pass. All images must
+fit in one texture (`GL_MAX_TEXTURE_SIZE`, typically ≥ 8192); if not, you get an
+actionable `AtlasOverflowError`. Runtime add/remove is not supported yet. See
+[`examples/atlas_animation.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/atlas_animation.py).
+
 ## A complete example
 
 ```python

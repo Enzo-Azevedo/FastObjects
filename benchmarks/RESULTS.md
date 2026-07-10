@@ -271,3 +271,14 @@ B/instancia.
 - **Nenhum "repensar" necessário:** o shelf packing estático é a escolha certa
   para montar atlas em load-time numa lib de renderização — rápido, escala
   linear, mesmo tamanho de saída, e imbatível no caso spritesheet.
+
+## Texto 2026-07-10 (N strings 'Item NNNNN' desenhadas)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Strings @ 60fps | avg ms | p99 ms |
+|---|---|---|---|
+| fastobjects | 145,873 | 9.781 | 10.888 |
+| pyglet | 43,222 | 14.442 | 15.818 |
+| pygame-ce | 3,795 | 13.902 | 19.94 |

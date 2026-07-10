@@ -89,6 +89,39 @@ Reading or writing size/rot/color marks that column for upload (conservative
 — never a silent no-show). After `despawn`/`clear`, any access raises
 `RuntimeError`. Do not store a property view across frames; re-access it.
 
+## `Font`
+
+```python
+Font(size=24, *, chars=None)
+```
+
+Rasterizes a character set into a glyph atlas from Pillow's built-in scalable
+font (no OpenGL — usable/testable without a context). `chars` defaults to
+printable ASCII + Latin-1 (accents); pass a string for a custom set. Raises
+`ValueError` for an empty `chars`.
+
+| Member | Description |
+|---|---|
+| `measure(text) -> (w, h)` | Block size of `text` (with `\n`), without drawing. |
+| `line_height` | Height of one line, in pixels. |
+| `size`, `glyphs` | The requested size; dict char → glyph info. |
+
+## `TextBatch`
+
+```python
+TextBatch(font, capacity, *, ctx=None, view_size=None)
+```
+
+Draws text as glyph-atlas sprites in one draw call. `capacity` is the maximum
+number of glyphs across all live writes. `ctx`/`view_size` default to the
+current window.
+
+| Member | Description |
+|---|---|
+| `write(text, x, y, color=(1,1,1,1), anchor="topleft") -> SpriteGroup` | Lays out `text` and returns a group over its glyph quads (move/recolor it). `\n` breaks lines; `anchor` is `"topleft"` or `"center"`. Raises `ValueError` (bad anchor) or `CapacityError`. |
+| `clear()` | Removes all glyphs (for per-frame dynamic text). |
+| `draw()`, `count` | One instanced draw call; live glyph count. |
+
 ## `SurfaceLayer`
 
 ```python

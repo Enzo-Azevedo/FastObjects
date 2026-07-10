@@ -91,6 +91,39 @@ Ler ou escrever size/rot/color marca aquela coluna para upload (conservador
 levanta `RuntimeError`. Não guarde uma view de propriedade entre frames;
 reacesse-a.
 
+## `Font`
+
+```python
+Font(size=24, *, chars=None)
+```
+
+Rasteriza um conjunto de caracteres num atlas de glifos, a partir da fonte
+embutida escalável do Pillow (sem OpenGL — usável/testável sem contexto).
+`chars` usa ASCII imprimível + Latin-1 (acentos) por padrão; passe uma string
+para um conjunto custom. Levanta `ValueError` se `chars` for vazio.
+
+| Membro | Descrição |
+|---|---|
+| `measure(text) -> (w, h)` | Tamanho do bloco de `text` (com `\n`), sem desenhar. |
+| `line_height` | Altura de uma linha, em pixels. |
+| `size`, `glyphs` | O size pedido; dict char → info do glifo. |
+
+## `TextBatch`
+
+```python
+TextBatch(font, capacity, *, ctx=None, view_size=None)
+```
+
+Desenha texto como sprites do atlas de glifos em um draw call. `capacity` é o
+máximo de glifos somando todos os writes vivos. `ctx`/`view_size` usam a janela
+atual por padrão.
+
+| Membro | Descrição |
+|---|---|
+| `write(text, x, y, color=(1,1,1,1), anchor="topleft") -> SpriteGroup` | Faz o layout de `text` e retorna um grupo sobre os quads (mova/recolore). `\n` quebra linha; `anchor` é `"topleft"` ou `"center"`. Levanta `ValueError` (anchor inválido) ou `CapacityError`. |
+| `clear()` | Remove todos os glifos (para texto dinâmico por frame). |
+| `draw()`, `count` | Um draw call instanciado; contagem de glifos vivos. |
+
 ## `SurfaceLayer`
 
 ```python

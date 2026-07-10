@@ -29,6 +29,26 @@ cópias `astype`/`tobytes` por frame:
 | 10.000 | 1.025 fps | 1.286 fps | 125% |
 | 100.000 | 353 fps | 384 fps | 109% |
 
+## Velocidade de packing de atlas
+
+Montar um texture atlas é um passo de load-time. Contra o
+[PyTexturePacker](https://pypi.org/project/PyTexturePacker/) (um packer MaxRects
+em Python puro), o shelf packing do FastObjects produz um atlas do **mesmo
+tamanho** e é bem mais rápido em imagens de mesmo tamanho (spritesheets): 30x em
+400 imagens, 77x em 800 — a lista de retângulos livres do MaxRects degenera em
+grids uniformes. Em arte de tamanhos variados os dois empatam, e o FastObjects
+escala linearmente. Números completos em
+[`benchmarks/RESULTS.md`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/benchmarks/RESULTS.md).
+(o patlas foi descartado da comparação: não tem wheels além do Python 3.9 e o
+sdist não compila.)
+
+## Throughput de texto
+
+Texto são sprites de um atlas de glifos em um draw call. Desenhando muitas
+strings curtas, o FastObjects sustenta **145.873 strings @ 60 fps** — 3,4x o
+pyglet (que também usa atlas de glifos, mas vertex lists por label) e 38x o
+pygame (uma surface nova por string).
+
 ## Reproduza
 
 ```bash

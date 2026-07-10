@@ -49,6 +49,7 @@ nav:
   - Guide:
       - Sprites & Groups: guide/sprites.md
       - Shapes: guide/shapes.md
+      - Text: guide/text.md
       - Window & Input: guide/window-input.md
       - Using inside pygame: guide/interop.md
   - Performance: performance.md

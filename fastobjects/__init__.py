@@ -5,19 +5,23 @@ import glfw as _glfw
 from fastobjects.batch import SpriteBatch
 from fastobjects.errors import CapacityError
 from fastobjects.external import ExternalWindow, attach
+from fastobjects.font import Font
 from fastobjects.group import SpriteGroup
 from fastobjects.layer import SurfaceLayer
 from fastobjects.shapes import ShapeBatch
+from fastobjects.text import TextBatch
 from fastobjects.window import Window
 
 __version__ = "0.5.0"
 __all__ = [
     "CapacityError",
     "ExternalWindow",
+    "Font",
     "ShapeBatch",
     "SpriteBatch",
     "SpriteGroup",
     "SurfaceLayer",
+    "TextBatch",
     "Window",
     "__version__",
     "attach",

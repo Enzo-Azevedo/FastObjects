@@ -124,3 +124,36 @@ sem `resize`/`rebuild` e sem ref-counting.
   coluna fria do SoA e o vertex shader faz `mix(uv0, uv1, corner)`. Assim a
   seleção de imagem entra de graça no dirty tracking existente (sobe só quando
   muda) e a animação de spritesheet é só `group.image = frame`.
+
+## Texto: como pygame/pyglet/arcade fazem (e por que atlas de glifos)
+
+**Data:** 2026-07-10 | **Versões:** pygame-ce 2.5.7, pyglet 2.1.15, arcade 3.3.3
+
+### pygame (`pygame/ftfont.py`, SDL_ttf)
+`Font.render(text, antialias, color) -> Surface` — rasteriza a string INTEIRA
+numa **Surface nova** a cada chamada; desenhar = `blit` dessa surface. Não há
+atlas de glifos: cada string é uma textura própria, re-rasterizada quando o
+texto muda. Simples, mas caro em volume (muitas strings ou texto que muda todo
+frame = muitas surfaces + muitos blits/binds).
+
+### pyglet (`pyglet/font/base.py`)
+Usa **atlas de glifos**: `GlyphTextureAtlas`/`GlyphTextureBin` (linhas 159-181)
+empacotam os glifos rasterizados numa textura (com um `Allocator` de
+prateleiras); `Glyph` é uma `TextureRegion` (UV). Um `Label`/`TextLayout` monta
+uma vertex list batched — os glifos saem juntos. Quando o atlas enche, cria
+outro (TextureBin). É essencialmente a nossa abordagem.
+
+### arcade (`arcade/text.py`)
+`arcade.Text` embrulha o `pyglet.text.Label` (herda o atlas de glifos + layout
+do pyglet), com um grupo próprio para ajustar o blending.
+
+### FastObjects
+Reusa o **texture atlas já existente** (o mesmo do SpriteBatch) para empacotar os
+glifos: `Font` rasteriza o charset com o Pillow (dep do core — zero dep nova) e
+empacota via nosso `Atlas`; `TextBatch.write` posiciona um quad por glifo nas
+colunas SoA e desenha tudo em **um draw call** (mesmo renderer/shader dos
+sprites; glifo branco × cor). É a abordagem do pyglet, construída sobre a
+infraestrutura de atlas que já tínhamos — nada de subsistema de texto separado.
+Vantagem sobre o pygame: texto dinâmico (score/FPS) é `clear()` + `write()` sem
+re-alocar surfaces, e N strings saem em um draw call. Limite da 0.6.0: fonte
+embutida do Pillow (fontes `.ttf` próprias + encoding vêm na 0.6.1).

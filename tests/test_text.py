@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import moderngl
 import numpy as np
 import pytest
@@ -93,6 +95,20 @@ def test_invalid_anchor_raises(gl):
     txt = TextBatch(font, capacity=100, ctx=ctx, view_size=(128, 64))
     with pytest.raises(ValueError, match="anchor"):
         txt.write("x", 0.0, 0.0, anchor="middle")
+
+
+@pytest.mark.skipif(
+    not Path("C:/Windows/Fonts/arial.ttf").exists(), reason="arial.ttf ausente"
+)
+def test_ttf_text_draws(gl):
+    ctx, fbo = gl
+    fbo.clear(0.0, 0.0, 0.0, 1.0)
+    font = Font("C:/Windows/Fonts/arial.ttf", 32)
+    txt = TextBatch(font, capacity=100, ctx=ctx, view_size=(128, 64))
+    txt.write("I", x=20.0, y=10.0)
+    txt.draw()
+    px = read(fbo)
+    assert px[:, :, :3].max() > 200
 
 
 def test_exports():

@@ -46,9 +46,14 @@ class Glyph(NamedTuple):
 
 
 class Font:
-    """Atlas de glifos de uma fonte embutida do Pillow (escalável).
+    """Atlas de glifos de uma fonte — embutida do Pillow ou `.ttf`/`.otf` própria.
+
+    Assinatura estilo pygame: ``Font("fonte.ttf", 24)``. Um caractere que a
+    fonte não cobre rasteriza o "tofu" da própria fonte.
 
     Args:
+        source: caminho `.ttf`/`.otf` ou nome de fonte instalada no sistema
+            (ex.: "arial.ttf"); None usa a fonte embutida do Pillow.
         size: altura da fonte em px.
         chars: caracteres a incluir; se dado, vence `charset`. Um caractere
             fora do conjunto é pulado no layout.
@@ -62,6 +67,7 @@ class Font:
         atlas_size: (largura, altura) do atlas.
         line_height: altura de uma linha (ascent + descent), em px.
         size: a altura pedida.
+        source: o que foi pedido em `source` (None = fonte embutida).
         glyphs: dict char -> Glyph.
     """
 
@@ -77,7 +83,17 @@ class Font:
             chars = _resolve_charset(charset)
         if not chars:
             raise ValueError("chars não pode ser vazio — passe ao menos um caractere.")
-        font = ImageFont.load_default(size=size)  # source usado na Task 2
+        if source is None:
+            font = ImageFont.load_default(size=size)
+        else:
+            try:
+                font = ImageFont.truetype(str(source), size=size)
+            except OSError as e:
+                raise ValueError(
+                    f"fonte não encontrada: {source!r}. Passe um caminho .ttf/.otf "
+                    "completo ou o nome de uma fonte instalada (ex.: 'arial.ttf')."
+                ) from e
+        self.source = None if source is None else str(source)
         self.size = size
         self.line_height = float(sum(font.getmetrics()))  # ascent + descent
 

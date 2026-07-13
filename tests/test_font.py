@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import pytest
 
 from fastobjects.font import Font
+
+_ARIAL = Path("C:/Windows/Fonts/arial.ttf")
+needs_arial = pytest.mark.skipif(not _ARIAL.exists(), reason="arial.ttf ausente")
 
 
 def test_default_charset_has_ascii_and_accents():
@@ -78,3 +83,27 @@ def test_charset_invalid_name_raises():
 def test_chars_overrides_charset():
     f = Font(chars="AB", charset="cyrillic")
     assert "A" in f.glyphs and "Д" not in f.glyphs
+
+
+@needs_arial
+def test_ttf_font_builds_and_lays_out():
+    f = Font(str(_ARIAL), 24)
+    assert f.source == str(_ARIAL)
+    assert f.glyphs["A"].uv is not None
+    centers, _, _, block = f.layout("Olá")
+    assert centers.shape[0] == 3 and block[0] > 0
+
+
+@needs_arial
+def test_ttf_covers_wide_charsets():
+    f = Font(str(_ARIAL), 24, charset=("latin", "cyrillic"))
+    assert f.glyphs["Д"].uv is not None
+
+
+def test_missing_font_raises_actionable():
+    with pytest.raises(ValueError, match="fonte"):
+        Font("nao-existe-esta-fonte.ttf", 24)
+
+
+def test_default_source_is_none():
+    assert Font(size=16).source is None

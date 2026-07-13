@@ -27,6 +27,7 @@ bench = [
     "freetype-py>=2.5",
     "PyOpenGL>=3.1",
 ]
+shaping = ["uharfbuzz>=0.39", "freetype-py>=2.5"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["fastobjects"]

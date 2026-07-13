@@ -57,3 +57,24 @@ def test_layout_skips_unknown_char():
 def test_measure_matches_layout_block():
     f = Font(size=24)
     assert f.measure("Hello") == pytest.approx(f.layout("Hello")[3])
+
+
+def test_charset_preset_is_independent():
+    f = Font(charset="cyrillic")
+    assert "Д" in f.glyphs
+    assert "A" not in f.glyphs  # presets não incluem ASCII implicitamente
+
+
+def test_charset_combination():
+    f = Font(charset=("latin", "greek"))
+    assert "A" in f.glyphs and "é" in f.glyphs and "Ω" in f.glyphs
+
+
+def test_charset_invalid_name_raises():
+    with pytest.raises(ValueError, match="charset"):
+        Font(charset="klingon")
+
+
+def test_chars_overrides_charset():
+    f = Font(chars="AB", charset="cyrillic")
+    assert "A" in f.glyphs and "Д" not in f.glyphs

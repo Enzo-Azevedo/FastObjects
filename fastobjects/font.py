@@ -9,11 +9,33 @@ from PIL import Image, ImageFont
 
 from fastobjects.atlas import Atlas
 
-# ASCII imprimível (0x20-0x7E) + Latin-1 imprimível (0xA1-0xFF): cobre acentos.
-_DEFAULT_CHARS = "".join(chr(c) for c in range(0x20, 0x7F)) + "".join(
-    chr(c) for c in range(0xA1, 0x100)
-)
+_ASCII = "".join(chr(c) for c in range(0x20, 0x7F))
+_CHARSETS: dict[str, str] = {
+    "ascii": _ASCII,
+    # ASCII + Latin-1 imprimível: o padrão (cobre acentos do português)
+    "latin": _ASCII + "".join(chr(c) for c in range(0xA1, 0x100)),
+    # latin + Latin Extended-A (Ā-ſ: polonês, tcheco, turco...)
+    "latin-ext": _ASCII + "".join(chr(c) for c in range(0xA1, 0x180)),
+    # grego moderno imprimível (pula code points reservados)
+    "greek": "".join(
+        chr(c) for c in range(0x386, 0x3CF) if c not in (0x38B, 0x38D, 0x3A2)
+    ),
+    # cirílico Ѐ-џ + Ґґ (ucraniano)
+    "cyrillic": "".join(chr(c) for c in range(0x400, 0x460)) + "Ґґ",
+}
 _ATLAS_MAX = 8192  # seguro em qualquer GPU desktop GL 3.3 real
+
+
+def _resolve_charset(charset: str | tuple[str, ...]) -> str:
+    names = (charset,) if isinstance(charset, str) else tuple(charset)
+    parts: list[str] = []
+    for name in names:
+        if name not in _CHARSETS:
+            raise ValueError(
+                f"charset desconhecido: {name!r} — válidos: {sorted(_CHARSETS)}"
+            )
+        parts.append(_CHARSETS[name])
+    return "".join(parts)
 
 
 class Glyph(NamedTuple):
@@ -28,8 +50,12 @@ class Font:
 
     Args:
         size: altura da fonte em px.
-        chars: caracteres a incluir; None usa ASCII imprimível + Latin-1
-            (acentos). Um caractere fora do conjunto é pulado no layout.
+        chars: caracteres a incluir; se dado, vence `charset`. Um caractere
+            fora do conjunto é pulado no layout.
+        charset: preset nomeado ("ascii", "latin", "latin-ext", "greek",
+            "cyrillic") ou tupla de presets para texto misto — presets são
+            independentes: "cyrillic" sozinho não inclui ASCII. Padrão
+            "latin" (ASCII + Latin-1, cobre acentos).
 
     Attributes:
         atlas_pixels: bytes RGBA (top-down) do atlas de glifos.
@@ -39,11 +65,19 @@ class Font:
         glyphs: dict char -> Glyph.
     """
 
-    def __init__(self, size: int = 24, *, chars: str | None = None) -> None:
-        chars = _DEFAULT_CHARS if chars is None else chars
+    def __init__(
+        self,
+        source: str | None = None,
+        size: int = 24,
+        *,
+        chars: str | None = None,
+        charset: str | tuple[str, ...] = "latin",
+    ) -> None:
+        if chars is None:
+            chars = _resolve_charset(charset)
         if not chars:
             raise ValueError("chars não pode ser vazio — passe ao menos um caractere.")
-        font = ImageFont.load_default(size=size)
+        font = ImageFont.load_default(size=size)  # source usado na Task 2
         self.size = size
         self.line_height = float(sum(font.getmetrics()))  # ascent + descent
 

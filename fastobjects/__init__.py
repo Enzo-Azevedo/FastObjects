@@ -12,7 +12,7 @@ from fastobjects.shapes import ShapeBatch
 from fastobjects.text import TextBatch
 from fastobjects.window import Window
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __all__ = [
     "CapacityError",
     "ExternalWindow",

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastobjects"
-version = "0.6.1"
+version = "0.6.2"
 description = "The fastest 2D object rendering library for Python"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -105,9 +105,18 @@ class RampController:
         return self.current
 
 
-def run_ramp(framework: str, trial_fn: Callable[[int], tuple[float, float]]) -> dict:
-    """Executa o protocolo completo: trial_fn(n) -> (avg_ms, p99_ms) por trial."""
-    ramp = RampController()
+def run_ramp(
+    framework: str,
+    trial_fn: Callable[[int], tuple[float, float]],
+    *,
+    start: int = 500,
+) -> dict:
+    """Executa o protocolo completo: trial_fn(n) -> (avg_ms, p99_ms) por trial.
+
+    `start` menor dá resolução a renderizadores que reprovam no piso padrão
+    (500) — senão o resultado vira 0 sem dizer o número real.
+    """
+    ramp = RampController(start=start)
     trials: list[dict] = []
     n: int | None = ramp.current
     while n is not None:

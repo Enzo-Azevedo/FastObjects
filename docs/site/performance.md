@@ -51,11 +51,13 @@ per string).
 
 Against the canonical freetype-py + PyOpenGL renderer (one GL texture and one
 draw call per glyph — the learnopengl.com tutorial technique), with the same
-`.ttf` on both sides, FastObjects sustains the same 145,873 strings while the
-per-glyph renderer cannot hold 60 fps at even 500 strings (~276 ms/frame):
-all text here is a single instanced draw call. Loading a `.ttf` costs the
-same as the built-in font at runtime; building the glyph atlas is a one-time
-~120 ms load step (see `benchmarks/RESULTS.md` for the load-time breakdown).
+`.ttf` on both sides and the same one-time prep advantage (quads precomputed
+outside the timed loop), FastObjects sustains the same 145,873 strings vs
+**55** for the per-glyph renderer (~2,650×): even with zero layout work per
+frame, per-glyph GL calls dominate, while all text here is a single instanced
+draw call. Loading a `.ttf` costs the same as the built-in font at runtime;
+building the glyph atlas is a one-time ~120 ms load step (see
+`benchmarks/RESULTS.md` for the load-time breakdown).
 
 ## Reproduce it
 

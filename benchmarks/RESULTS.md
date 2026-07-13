@@ -309,3 +309,28 @@ Notas (0.6.1, gate da fase):
   ~101 ms de rasterização via API do Pillow (getmask/getlength/getbbox +
   conversão RGBA por glifo) + ~37 ms de empacotamento. Custo único de load,
   irrelevante no frame loop; registrado por honestidade.
+
+### Correção 2026-07-13: freetype-gl injustiçado (apontado pelo usuário)
+
+O resultado "0" acima era injusto por dois motivos:
+
+1. **Preparação por frame**: o bench reconstruía o array numpy do quad de
+   cada glifo dentro do loop medido, enquanto todos os outros benches fazem a
+   preparação uma vez fora dele (pygame pré-renderiza surfaces, pyglet cria os
+   Labels antes, fastobjects faz `write()` antes). Corrigido: quads
+   pré-computados por trial; o frame paga só o que define a técnica —
+   bind + upload + draw call **por glifo**.
+2. **Piso da rampa**: começando em 500, um renderizador que reprova no
+   primeiro degrau vira "0" sem revelar o número real (e a janela fica parada
+   sem strings novas — a rampa parou no trial 1). `run_ramp` ganhou
+   `start=`; o freetype-gl roda com `start=25`.
+
+Resultado corrigido (mesmas condições da tabela acima):
+
+| Framework | Strings @ 60fps | avg ms | p99 ms |
+|---|---|---|---|
+| freetype-gl (corrigido) | **55** | 14.696 | 23.205 |
+
+(82 strings já estoura: 24,0 ms avg.) O gate continua aprovado — 145.873 vs
+55 (~2.650x): 55 strings ≈ 550 glifos ≈ 1.650 chamadas GL via PyOpenGL por
+frame; o custo por draw call domina mesmo sem nenhum trabalho de layout.

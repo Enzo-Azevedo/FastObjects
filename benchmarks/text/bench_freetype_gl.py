@@ -3,7 +3,9 @@
 Implementa a técnica publicada de referência (learnopengl.com "Text
 Rendering"): FreeType rasteriza cada glifo numa textura GL_RED própria; cada
 caractere desenhado é um glBufferSubData do quad + glBindTexture +
-glDrawArrays. Sem otimizações além do tutorial.
+glDrawArrays. Concessão de justiça (cena estática, como nos outros benches):
+os quads são pré-computados uma vez fora do loop medido — o frame paga só o
+que define a técnica: bind + upload + draw call por glifo.
 """
 
 import json
@@ -119,7 +121,8 @@ def main() -> None:
 
     glyphs = load_glyphs("Item 0123456789")
 
-    def draw_string(s: str, x: float, y: float) -> None:
+    def layout_string(s: str, x: float, y: float, out: list) -> None:
+        """Pré-computa os quads (bytes prontos p/ glBufferSubData) de uma string."""
         for ch in s:
             tex, w, h, left, top, adv = glyphs[ch]
             if w and h:
@@ -135,16 +138,20 @@ def main() -> None:
                     ],
                     dtype="f4",
                 )
-                GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
-                GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, quad.nbytes, quad)
-                GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
+                out.append((tex, quad.tobytes()))
             x += adv
 
     def trial(n: int) -> tuple[float, float]:
         rng = np.random.default_rng(SEED)
         xs = rng.uniform(0, WIDTH - 100, n)
         ys = rng.uniform(16, HEIGHT, n)
-        strings = [f"Item {i:05d}" for i in range(n)]
+        # Preparação única fora dos frames medidos — a mesma regalia dos
+        # outros benches (pygame pré-renderiza surfaces, fastobjects faz
+        # write() antes do loop). No frame sobra o que define a técnica:
+        # bind + upload + draw call POR GLIFO.
+        items: list[tuple[int, bytes]] = []
+        for i in range(n):
+            layout_string(f"Item {i:05d}", xs[i], ys[i], items)
         timer = FrameTimer()
         for frame in range(WARMUP_FRAMES + MEASURE_FRAMES):
             glfw.poll_events()
@@ -152,14 +159,17 @@ def main() -> None:
                 timer.begin()
             GL.glClearColor(0.1, 0.1, 0.12, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-            for i in range(n):
-                draw_string(strings[i], xs[i], ys[i])
+            for tex, data in items:
+                GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+                GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, len(data), data)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
             glfw.swap_buffers(win)
             if frame >= WARMUP_FRAMES:
                 timer.end()
         return timer.avg_ms, timer.p99_ms
 
-    result = run_ramp("freetype-gl", trial)
+    # start=25: reprovou no piso padrão (500); piso menor dá o número real.
+    result = run_ramp("freetype-gl", trial, start=25)
     glfw.terminate()
     print(json.dumps(result))
 

@@ -94,19 +94,27 @@ reacesse-a.
 ## `Font`
 
 ```python
-Font(size=24, *, chars=None)
+Font(source=None, size=24, *, chars=None, charset="latin")
 ```
 
-Rasteriza um conjunto de caracteres num atlas de glifos, a partir da fonte
-embutida escalável do Pillow (sem OpenGL — usável/testável sem contexto).
-`chars` usa ASCII imprimível + Latin-1 (acentos) por padrão; passe uma string
-para um conjunto custom. Levanta `ValueError` se `chars` for vazio.
+Rasteriza um conjunto de caracteres num atlas de glifos (sem OpenGL —
+usável/testável sem contexto). Assinatura estilo pygame: fonte primeiro,
+tamanho depois.
+
+- `source` — caminho `.ttf`/`.otf` ou nome de fonte instalada no sistema
+  (ex.: `"arial.ttf"`); `None` usa a fonte embutida escalável do Pillow.
+  Levanta `ValueError` se a fonte não for encontrada.
+- `charset` — nome de preset ou tupla de presets: `"ascii"`, `"latin"`
+  (padrão: ASCII + Latin-1, cobre acentos), `"latin-ext"`, `"greek"`,
+  `"cyrillic"`. Presets são independentes; combine para texto misto.
+- `chars` — string explícita de caracteres; vence `charset`. Levanta
+  `ValueError` se vazio.
 
 | Membro | Descrição |
 |---|---|
 | `measure(text) -> (w, h)` | Tamanho do bloco de `text` (com `\n`), sem desenhar. |
 | `line_height` | Altura de uma linha, em pixels. |
-| `size`, `glyphs` | O size pedido; dict char → info do glifo. |
+| `size`, `source`, `glyphs` | O size pedido; o source pedido (`None` = embutida); dict char → info do glifo. |
 
 ## `TextBatch`
 

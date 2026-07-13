@@ -49,6 +49,14 @@ FastObjects sustains **145,873 strings @ 60 fps** — 3.4× pyglet (which also
 uses a glyph atlas, but per-label vertex lists) and 38× pygame (a new surface
 per string).
 
+Against the canonical freetype-py + PyOpenGL renderer (one GL texture and one
+draw call per glyph — the learnopengl.com tutorial technique), with the same
+`.ttf` on both sides, FastObjects sustains the same 145,873 strings while the
+per-glyph renderer cannot hold 60 fps at even 500 strings (~276 ms/frame):
+all text here is a single instanced draw call. Loading a `.ttf` costs the
+same as the built-in font at runtime; building the glyph atlas is a one-time
+~120 ms load step (see `benchmarks/RESULTS.md` for the load-time breakdown).
+
 ## Reproduce it
 
 ```bash

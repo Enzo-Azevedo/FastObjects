@@ -92,19 +92,26 @@ Reading or writing size/rot/color marks that column for upload (conservative
 ## `Font`
 
 ```python
-Font(size=24, *, chars=None)
+Font(source=None, size=24, *, chars=None, charset="latin")
 ```
 
-Rasterizes a character set into a glyph atlas from Pillow's built-in scalable
-font (no OpenGL — usable/testable without a context). `chars` defaults to
-printable ASCII + Latin-1 (accents); pass a string for a custom set. Raises
-`ValueError` for an empty `chars`.
+Rasterizes a character set into a glyph atlas (no OpenGL — usable/testable
+without a context). Pygame-style signature: font first, size second.
+
+- `source` — a `.ttf`/`.otf` path or the name of an installed system font
+  (e.g. `"arial.ttf"`); `None` uses Pillow's built-in scalable font. Raises
+  `ValueError` if the font can't be found.
+- `charset` — a preset name or tuple of presets: `"ascii"`, `"latin"`
+  (default: ASCII + Latin-1, covers accents), `"latin-ext"`, `"greek"`,
+  `"cyrillic"`. Presets are independent; combine for mixed text.
+- `chars` — explicit character string; wins over `charset`. Raises
+  `ValueError` if empty.
 
 | Member | Description |
 |---|---|
 | `measure(text) -> (w, h)` | Block size of `text` (with `\n`), without drawing. |
 | `line_height` | Height of one line, in pixels. |
-| `size`, `glyphs` | The requested size; dict char → glyph info. |
+| `size`, `source`, `glyphs` | Requested size; requested source (`None` = built-in); dict char → glyph info. |
 
 ## `TextBatch`
 

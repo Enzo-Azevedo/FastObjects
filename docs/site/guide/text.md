@@ -55,13 +55,33 @@ w, h = font.measure("Game Over")
 label.write("Game Over", x=(800 - w) / 2, y=(600 - h) / 2)
 ```
 
+## Custom fonts
+
+`Font` takes the font first, pygame-style — a `.ttf`/`.otf` path or the name
+of an installed system font. `None` (the default) uses Pillow's built-in font.
+
+```python
+hud = fo.Font("assets/PressStart2P.ttf", 16)
+system = fo.Font("arial.ttf", 24)          # searched in the system font dirs
+```
+
+## Character sets
+
+The atlas rasterizes one fixed set of characters, chosen at construction:
+
+```python
+fo.Font("arial.ttf", 24)                            # "latin" (default): ASCII + Latin-1
+fo.Font("arial.ttf", 24, charset="cyrillic")        # Ѐ-џ only — no ASCII
+fo.Font("arial.ttf", 24, charset=("latin", "greek", "cyrillic"))  # mixed text
+fo.Font("arial.ttf", 24, chars="0123456789/:")      # full control (wins over charset)
+```
+
+Presets: `"ascii"`, `"latin"`, `"latin-ext"`, `"greek"`, `"cyrillic"`.
+Presets are independent — combine them in a tuple for mixed text. A character
+the *font file* doesn't cover renders as that font's tofu box; a character
+outside the *atlas charset* is skipped (drawn as a space).
+
 ## A complete example
 
 See [`examples/text_hud.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/text_hud.py)
 (static labels + a live FPS counter).
-
-!!! note "0.6.0 uses the built-in font"
-    This release renders with Pillow's built-in scalable font. Loading your own
-    `.ttf`/`.otf` files and text encoding/formatting options are planned for
-    0.6.1. Characters outside the font's character set are skipped (they advance
-    like a space).

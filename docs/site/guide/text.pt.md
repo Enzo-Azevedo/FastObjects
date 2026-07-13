@@ -56,13 +56,34 @@ w, h = font.measure("Game Over")
 label.write("Game Over", x=(800 - w) / 2, y=(600 - h) / 2)
 ```
 
+## Fontes customizadas
+
+`Font` recebe a fonte primeiro, estilo pygame — um caminho `.ttf`/`.otf` ou o
+nome de uma fonte instalada no sistema. `None` (o padrão) usa a fonte embutida
+do Pillow.
+
+```python
+hud = fo.Font("assets/PressStart2P.ttf", 16)
+sistema = fo.Font("arial.ttf", 24)         # procurada nos diretórios do sistema
+```
+
+## Conjuntos de caracteres
+
+O atlas rasteriza um conjunto fixo de caracteres, escolhido na construção:
+
+```python
+fo.Font("arial.ttf", 24)                            # "latin" (padrão): ASCII + Latin-1
+fo.Font("arial.ttf", 24, charset="cyrillic")        # só Ѐ-џ — sem ASCII
+fo.Font("arial.ttf", 24, charset=("latin", "greek", "cyrillic"))  # texto misto
+fo.Font("arial.ttf", 24, chars="0123456789/:")      # controle total (vence charset)
+```
+
+Presets: `"ascii"`, `"latin"`, `"latin-ext"`, `"greek"`, `"cyrillic"`.
+Presets são independentes — combine-os numa tupla para texto misto. Um
+caractere que o *arquivo da fonte* não cobre renderiza o tofu da própria
+fonte; um caractere fora do *charset do atlas* é pulado (avança como espaço).
+
 ## Um exemplo completo
 
 Veja [`examples/text_hud.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/text_hud.py)
 (labels estáticos + um contador de FPS ao vivo).
-
-!!! note "A 0.6.0 usa a fonte embutida"
-    Esta versão renderiza com a fonte embutida escalável do Pillow. Carregar
-    seus próprios `.ttf`/`.otf` e opções de encoding/formatação de texto estão
-    planejados para a 0.6.1. Caracteres fora do conjunto da fonte são pulados
-    (avançam como um espaço).

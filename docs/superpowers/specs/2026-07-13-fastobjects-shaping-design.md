@@ -58,11 +58,12 @@ HarfBuzz); quebra automática de linha.
   importarem; senão cai no caminho 0.6.1 sem erro. Zero fricção; `Font.shaped`
   remove a ambiguidade. Rejeitados: flag `shape=True` (mais um parâmetro para
   descobrir) e shaping obrigatório (quebraria quem usa `.ttf` só com o core).
-- **`charset`/`chars` são ignorados no caminho shaped** (o atlas tem a fonte
-  inteira; documentado no guia e na docstring). Caractere sem glifo na fonte
-  rasteriza o `.notdef` (tofu) da fonte — consistente com renderizadores reais. O
-  caminho não-shaped continua exatamente como na 0.6.1, incluindo a validação de
-  `chars` vazio.
+- **No caminho shaped, `charset`/`chars` definem só a visão pública `Font.glyphs`
+  (char → Glyph, via cmap), não o atlas nem o layout** — o atlas tem a fonte
+  inteira e o layout aceita qualquer caractere. Isso preserva o contrato público
+  de `glyphs` da 0.6.1 (testes e docs acessam `f.glyphs["A"]`). Caractere sem
+  glifo na fonte rasteriza o `.notdef` (tofu) da fonte. O caminho não-shaped
+  continua exatamente como na 0.6.1, incluindo a validação de `chars` vazio.
 - **Shaping por linha, direção automática.** `\n` divide; cada linha vira um buffer
   HarfBuzz com `guess_segment_properties()` (direção/script pela primeira letra
   forte). Linha mista usa a direção dominante — documentado.
@@ -132,8 +133,10 @@ shaping = ["uharfbuzz>=0.39", "freetype-py>=2.5"]
 
 `tests/test_edge_cases.py` (novo — regra permanente do usuário):
 
-- **Capacity zero**: `SpriteBatch(img, capacity=0)` e `TextBatch(font, 0)` — spawn/
-  write de 0 objetos funciona; de 1 → `CapacityError`.
+- **Capacity zero e alocação vazia**: `capacity=0` levanta o `ValueError`
+  acionável que o `BatchCore` já define (contrato existente, pinado por teste);
+  `spawn(0)`/`write("")` num batch normal devolve grupo vazio válido; lote cheio
+  exato funciona e o objeto seguinte → `CapacityError`.
 - **Despawn em massa**: 50 grupos, despawn de todos em ordem aleatória (seed fixa) —
   count volta a 0, handles restantes válidos a cada passo, redesenho não quebra;
   despawn de grupo já removido → `RuntimeError`.

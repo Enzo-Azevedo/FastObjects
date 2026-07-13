@@ -111,6 +111,20 @@ def test_ttf_text_draws(gl):
     assert px[:, :, :3].max() > 200
 
 
+@pytest.mark.skipif(
+    not Path("C:/Windows/Fonts/arial.ttf").exists(), reason="arial.ttf ausente"
+)
+def test_arabic_text_draws_pixels(gl):
+    ctx, fbo = gl
+    fbo.clear(0.0, 0.0, 0.0, 1.0)
+    font = Font("C:/Windows/Fonts/arial.ttf", 24)
+    txt = TextBatch(font, capacity=100, ctx=ctx, view_size=(128, 64))
+    txt.write("سلام", x=10.0, y=10.0)
+    txt.draw()
+    px = read(fbo)
+    assert px[:, :, :3].max() > 200  # árabe renderiza (shaped ou fallback)
+
+
 def test_exports():
     import fastobjects as fo
 

@@ -51,6 +51,13 @@ class Font:
     Assinatura estilo pygame: ``Font("fonte.ttf", 24)``. Um caractere que a
     fonte não cobre rasteriza o "tofu" da própria fonte.
 
+    Com o extra `fastobjects[shaping]` instalado (uharfbuzz + freetype-py),
+    fontes `.ttf`/`.otf` são shapeadas automaticamente — RTL, kerning e
+    ligaturas corretos (`shaped=True`); o atlas então contém a fonte inteira
+    e `chars`/`charset` definem apenas a visão pública `glyphs`. Sem o extra,
+    cai no layout simples por caractere (`shaped=False`). Limite: linha que
+    mistura LTR e RTL usa a direção dominante da linha (sem bidi completo).
+
     Args:
         source: caminho `.ttf`/`.otf` ou nome de fonte instalada no sistema
             (ex.: "arial.ttf"); None usa a fonte embutida do Pillow.
@@ -68,6 +75,7 @@ class Font:
         line_height: altura de uma linha (ascent + descent), em px.
         size: a altura pedida.
         source: o que foi pedido em `source` (None = fonte embutida).
+        shaped: True se o shaping (HarfBuzz) está ativo nesta fonte.
         glyphs: dict char -> Glyph.
     """
 
@@ -83,6 +91,33 @@ class Font:
             chars = _resolve_charset(charset)
         if not chars:
             raise ValueError("chars não pode ser vazio — passe ao menos um caractere.")
+        self.source = None if source is None else str(source)
+        self.size = size
+        self.shaped = False
+        self._backend = None
+        if source is not None:
+            from fastobjects import shaping
+
+            if shaping.available():
+                try:
+                    backend = shaping.ShapedBackend(str(source), size)
+                except OSError as e:
+                    raise ValueError(
+                        f"fonte não encontrada: {source!r}. Passe um caminho "
+                        ".ttf/.otf completo ou o nome de uma fonte instalada "
+                        "(ex.: 'arial.ttf')."
+                    ) from e
+                self._backend = backend
+                self.shaped = True
+                self.line_height = backend.line_height
+                self.atlas_pixels = backend.atlas_pixels
+                self.atlas_size = backend.atlas_size
+                self.glyphs = {}
+                for ch in dict.fromkeys(chars):
+                    gid = backend.char_index(ch)
+                    if gid:
+                        self.glyphs[ch] = backend.glyphs[gid]
+                return
         if source is None:
             font = ImageFont.load_default(size=size)
         else:
@@ -93,8 +128,6 @@ class Font:
                     f"fonte não encontrada: {source!r}. Passe um caminho .ttf/.otf "
                     "completo ou o nome de uma fonte instalada (ex.: 'arial.ttf')."
                 ) from e
-        self.source = None if source is None else str(source)
-        self.size = size
         self.line_height = float(sum(font.getmetrics()))  # ascent + descent
 
         imgs: list[Image.Image] = []
@@ -133,6 +166,8 @@ class Font:
             centros dos quads (sprites são center-based), tamanhos, UVs e o
             tamanho do bloco de texto. n = número de glifos com bitmap.
         """
+        if self._backend is not None:
+            return self._backend.layout(text)
         space = self.glyphs.get(" ")
         space_adv = space.advance if space else self.size * 0.5
         centers, sizes, uvs = [], [], []

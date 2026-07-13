@@ -110,10 +110,17 @@ tamanho depois.
 - `chars` — string explícita de caracteres; vence `charset`. Levanta
   `ValueError` se vazio.
 
+Com o extra opcional `fastobjects[shaping]` instalado (uharfbuzz +
+freetype-py), fontes `.ttf`/`.otf` são shapeadas automaticamente — RTL,
+kerning e ligaturas corretos (`shaped=True`); o atlas então contém a fonte
+inteira e `charset`/`chars` definem apenas a visão pública `glyphs`. Sem o
+extra, o `Font` cai silenciosamente no layout simples por caractere.
+
 | Membro | Descrição |
 |---|---|
 | `measure(text) -> (w, h)` | Tamanho do bloco de `text` (com `\n`), sem desenhar. |
 | `line_height` | Altura de uma linha, em pixels. |
+| `shaped` | `True` quando o shaping (HarfBuzz) está ativo nesta fonte. |
 | `size`, `source`, `glyphs` | O size pedido; o source pedido (`None` = embutida); dict char → info do glifo. |
 
 ## `TextBatch`

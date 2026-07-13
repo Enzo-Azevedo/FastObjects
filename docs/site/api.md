@@ -107,10 +107,17 @@ without a context). Pygame-style signature: font first, size second.
 - `chars` — explicit character string; wins over `charset`. Raises
   `ValueError` if empty.
 
+With the optional `fastobjects[shaping]` extra installed (uharfbuzz +
+freetype-py), `.ttf`/`.otf` fonts are shaped automatically — correct RTL,
+kerning, and ligatures (`shaped=True`); the atlas then holds the whole font
+and `charset`/`chars` only define the public `glyphs` view. Without the
+extra, `Font` silently falls back to the simple per-character layout.
+
 | Member | Description |
 |---|---|
 | `measure(text) -> (w, h)` | Block size of `text` (with `\n`), without drawing. |
 | `line_height` | Height of one line, in pixels. |
+| `shaped` | `True` when HarfBuzz shaping is active for this font. |
 | `size`, `source`, `glyphs` | Requested size; requested source (`None` = built-in); dict char → glyph info. |
 
 ## `TextBatch`

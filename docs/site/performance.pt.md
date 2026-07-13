@@ -59,6 +59,13 @@ todo o texto é um único draw call instanciado. Carregar uma `.ttf` custa o
 mesmo que a fonte embutida em runtime; construir o atlas de glifos é um passo
 único de load de ~120 ms (detalhes do load-time em `benchmarks/RESULTS.md`).
 
+Com o extra `fastobjects[shaping]` ativo, o custo do shaping fica todo no
+`write()`/load: o layout roda a 14.486 strings/s (vs 35.109 do layout simples
+— que renderiza árabe incorretamente) e carregar um `Font` shaped rasteriza a
+fonte inteira uma vez (~1,4 s para o arial). **O frame não muda**: o
+throughput de draw segue em 145.873 strings @ 60 fps — mesmos quads, mesmo
+atlas, mesmo draw call único.
+
 ## Reproduza
 
 ```bash

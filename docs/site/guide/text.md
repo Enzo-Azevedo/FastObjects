@@ -81,6 +81,28 @@ Presets are independent — combine them in a tuple for mixed text. A character
 the *font file* doesn't cover renders as that font's tofu box; a character
 outside the *atlas charset* is skipped (drawn as a space).
 
+## Complex text: RTL, kerning, ligatures
+
+Install the optional shaping extra and `Font` upgrades itself — Arabic and
+Hebrew come out connected and in the right order, and kerning pairs apply:
+
+```bash
+pip install fastobjects[shaping]
+```
+
+```python
+font = fo.Font("arial.ttf", 24)
+font.shaped        # True when the extra is installed (False = simple layout)
+labels.write("سلام عليكم", x=20, y=20)   # correct contextual forms + RTL
+```
+
+With shaping active the atlas contains **every glyph in the font** (ligatures
+and contextual forms have no character of their own), so `charset`/`chars`
+only choose which characters appear in the public `font.glyphs` dict. A line
+mixing LTR and RTL uses the dominant direction detected by HarfBuzz — full
+bidi is a known limit. Without the extra, `Font` falls back to the simple
+per-character layout (fine for Latin/Greek/Cyrillic).
+
 ## A complete example
 
 See [`examples/text_hud.py`](https://github.com/Enzo-Azevedo/FastObjects/blob/main/examples/text_hud.py)

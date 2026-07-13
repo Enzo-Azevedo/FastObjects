@@ -24,6 +24,8 @@ bench = [
     "pygame-ce>=2.5",
     "arcade>=3.0",
     "raylib>=5.5",
+    "freetype-py>=2.5",
+    "PyOpenGL>=3.1",
 ]
 
 [tool.hatch.build.targets.wheel]

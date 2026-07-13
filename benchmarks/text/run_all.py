@@ -12,7 +12,14 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 RESULTS_MD = HERE.parent / "RESULTS.md"
-BENCHES = ["bench_fastobjects.py", "bench_pygame.py", "bench_pyglet.py"]
+ARIAL = "C:/Windows/Fonts/arial.ttf"
+BENCHES: list[list[str]] = [
+    ["bench_fastobjects.py"],
+    ["bench_fastobjects.py", "--font", ARIAL, "--name", "fastobjects-ttf"],
+    ["bench_pygame.py"],
+    ["bench_pyglet.py"],
+    ["bench_freetype_gl.py"],
+]
 
 
 def parse_bench_output(stdout: str) -> dict:
@@ -57,10 +64,10 @@ def main() -> None:
 
     results = []
     for bench in BENCHES:
-        print(f"== rodando {bench} ==", flush=True)
+        print(f"== rodando {' '.join(bench)} ==", flush=True)
         try:
             proc = subprocess.run(
-                [sys.executable, str(HERE / bench)],
+                [sys.executable, str(HERE / bench[0]), *bench[1:]],
                 capture_output=True, text=True, cwd=str(HERE), timeout=600,
             )
         except subprocess.TimeoutExpired:

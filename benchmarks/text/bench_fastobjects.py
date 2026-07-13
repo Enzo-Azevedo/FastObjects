@@ -1,5 +1,6 @@
 """Texto: fastobjects (TextBatch, N strings, um draw call)."""
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -24,8 +25,13 @@ MAX_CAPACITY = 2_000_000  # glifos
 
 
 def main() -> None:
-    win = Window(WIDTH, HEIGHT, "text: fastobjects", vsync=False)
-    font = Font(size=16)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--font", default=None)
+    parser.add_argument("--name", default="fastobjects")
+    args = parser.parse_args()
+
+    win = Window(WIDTH, HEIGHT, f"text: {args.name}", vsync=False)
+    font = Font(args.font, size=16)
 
     def trial(n: int) -> tuple[float, float]:
         strings = [f"Item {i:05d}" for i in range(n)]
@@ -49,7 +55,7 @@ def main() -> None:
                 timer.end()
         return timer.avg_ms, timer.p99_ms
 
-    result = run_ramp("fastobjects", trial)
+    result = run_ramp(args.name, trial)
     win.close()
     print(json.dumps(result))
 

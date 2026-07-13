@@ -282,3 +282,30 @@ B/instancia.
 | fastobjects | 145,873 | 9.781 | 10.888 |
 | pyglet | 43,222 | 14.442 | 15.818 |
 | pygame-ce | 3,795 | 13.902 | 19.94 |
+
+## Texto 2026-07-13 (N strings 'Item NNNNN' desenhadas)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10
+
+| Framework | Strings @ 60fps | avg ms | p99 ms |
+|---|---|---|---|
+| fastobjects | 145,873 | 9.461 | 10.473 |
+| fastobjects-ttf | 145,873 | 9.707 | 10.734 |
+| pyglet | 43,222 | 13.87 | 15.136 |
+| pygame-ce | 3,795 | 13.061 | 18.132 |
+| freetype-gl | 0 | - | - |
+
+Notas (0.6.1, gate da fase):
+
+- `fastobjects-ttf` usa a mesma `arial.ttf` do `freetype-gl` (comparação justa);
+  fonte `.ttf` custa o mesmo que a embutida (145.873 nos dois casos).
+- `freetype-gl` (`bench_freetype_gl.py`) é a técnica canônica do tutorial
+  learnopengl — textura GL e **um draw call por glifo**: não sustenta nem o
+  primeiro degrau da rampa (500 strings = ~276 ms/frame). **Gate aprovado.**
+- Load-time (`bench_font_build.py`, charset latin/191 chars, arial.ttf 16px):
+  `Font(ttf)` constrói o atlas em **119,8 ms** vs **18,9 ms** do freetype-py
+  puro — que só decodifica bitmaps, sem montar atlas. O custo do `Font` é
+  ~101 ms de rasterização via API do Pillow (getmask/getlength/getbbox +
+  conversão RGBA por glifo) + ~37 ms de empacotamento. Custo único de load,
+  irrelevante no frame loop; registrado por honestidade.

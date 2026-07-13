@@ -334,3 +334,24 @@ Resultado corrigido (mesmas condições da tabela acima):
 (82 strings já estoura: 24,0 ms avg.) O gate continua aprovado — 145.873 vs
 55 (~2.650x): 55 strings ≈ 550 glifos ≈ 1.650 chamadas GL via PyOpenGL por
 frame; o custo por draw call domina mesmo sem nenhum trabalho de layout.
+
+## Shaping 2026-07-13 (0.6.2 — custo do texto complexo)
+
+- Hardware: Intel64 Family 6 Model 62 Stepping 4, GenuineIntel | GPU: AMD Radeon RX 580 2048SP
+- Python 3.13.13 | Windows 10 | arial.ttf 16px, 2.000 strings "سلام عليكم NNNN"
+- `benchmarks/text/bench_shaping.py` (layout, sem GL) + `bench_fastobjects.py`
+  (draw, foreground)
+
+| Medição | shaped (HarfBuzz) | simples (0.6.1) |
+|---|---|---|
+| layout (write) | 14.486 strings/s | 35.109 strings/s (árabe INCORRETO) |
+| load `Font(ttf)` | 1.401,6 ms (fonte inteira, ~3,4k glifos) | 123,3 ms |
+| draw @ 60fps | **145.873 strings** | 145.873 strings |
+
+- O custo do shaping é pago no `write()`/load; **o frame não muda** — draw
+  idêntico (145.873, mesmo degrau da rampa), pois os quads/atlas são iguais.
+- Pillow+Raqm (referência publicada de corretude) indisponível nesta máquina:
+  a wheel Windows do Pillow vem sem Raqm — o teste de referência existe e
+  roda onde houver Raqm (`test_raqm_reference_width_agrees`, skip aqui).
+  Corretude validada pelos testes semânticos: lam-alef → 1 glifo, formas
+  contextuais distintas, kerning AV, ordem visual RTL.
